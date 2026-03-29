@@ -91,14 +91,21 @@ export async function onRequestGet({ request, env }) {
       const icbBase = "https://www.indiancoffeebeans.com/api/v1";
       const headers = { Authorization: `Bearer ${key}` };
 
-      if (slug) {
-        const r = await fetch(`${icbBase}/coffees/${encodeURIComponent(slug)}`, { headers });
-        const d = await r.json();
-        return json(d as any, r.status);
-      } else {
-        const r = await fetch(`${icbBase}/coffees?q=${encodeURIComponent(q)}&limit=8`, { headers });
-        const d = await r.json();
-        return json(d as any, r.status);
+      try {
+        const url = slug
+          ? `${icbBase}/coffees/${encodeURIComponent(slug)}`
+          : `${icbBase}/coffees?q=${encodeURIComponent(q)}&limit=8`;
+        const r    = await fetch(url, { headers });
+        const text = await r.text();
+        if (!text || text.trim() === "") {
+          return json({ error: "ICB returned empty response", status: r.status, key_prefix: key.slice(0,12) }, 502);
+        }
+        let d;
+        try { d = JSON.parse(text); }
+        catch(e) { return json({ error: "ICB returned invalid JSON", raw: text.slice(0,200), status: r.status }, 502); }
+        return json(d, r.status);
+      } catch(e: any) {
+        return json({ error: "ICB fetch failed", detail: e.message }, 502);
       }
     }
 
