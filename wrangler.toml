@@ -1,8 +1,0 @@
-name = "coffee-tracker"
-compatibility_date = "2026-03-28"
-pages_build_output_dir = "."
-
-[[d1_databases]]
-binding = "DB"
-database_name = "databasew_name"
-database_id = "your-cloudflare-d1-id"
