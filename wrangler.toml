@@ -1,9 +1,0 @@
-name = "coffee-tracker"
-compatibility_date = "2026-03-28"
-compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "."
-
-[[d1_databases]]
-binding = "DB"
-database_name = "coffeeforgaurav"
-database_id = "2f438066-8438-487e-b742-8704b135c77a"
