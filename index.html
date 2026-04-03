@@ -2396,7 +2396,7 @@
        CONSTANTS & STATE
     ═══════════════════════════════════════════════════════════ */
     const API = '/api/logs';
-    const ICB_API = 'https://www.indiancoffeebeans.com/api/search-index';
+    const ICB_API = '/api/explore';
     
     const $ = id => document.getElementById(id);
     const esc = str => String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -2459,26 +2459,23 @@
     }
 
     function updateUserUI() {
-      const profileEl = $('user-profile');
-      if (userData) {
-        profileEl.innerHTML = `
-          <img src="${userData.picture}" class="user-avatar" title="${userData.name}">
-          <button class="btn-rm" onclick="logout()" title="Logout" style="font-size: 1.2rem">⎋</button>
-        `;
-      } else {
-        profileEl.innerHTML = `
-          <div id="g_id_onload"
-            data-client_id="948876617439-3ht5ofkikeq6iunotqlrmprac34sccmd.apps.googleusercontent.com"
-            data-callback="handleCredentialResponse"
-            data-auto_prompt="false">
-          </div>
-          <div class="g_id_signin" data-type="icon" data-shape="circle" data-theme="outline" data-text="signin_with" data-size="large"></div>
-        `;
-        // Re-init Google button if it was cleared
-        if (window.google) window.google.accounts.id.renderButton(
-          document.querySelector(".g_id_signin"),
-          { type: "icon", shape: "circle", theme: "outline", size: "large" }
-        );
+      document.querySelectorAll('.user-profile').forEach(profileEl => {
+        if (userData) {
+          profileEl.innerHTML = `
+            <img src="${userData.picture}" class="user-avatar" title="${userData.name}">
+            <button class="btn-rm" onclick="logout()" title="Logout" style="font-size: 1.2rem">⎋</button>
+          `;
+        } else {
+          profileEl.innerHTML = `
+            <div class="g_id_signin"></div>
+          `;
+        }
+      });
+      // Initialize Google buttons on all .g_id_signin elements
+      if (!userData && window.google) {
+        document.querySelectorAll('.g_id_signin').forEach(btn => {
+          google.accounts.id.renderButton(btn, { type: 'icon', shape: 'circle', theme: 'outline', size: 'large' });
+        });
       }
     }
 
@@ -2487,13 +2484,22 @@
     ═══════════════════════════════════════════════════════════ */
     async function fetchExplore() {
       if (exploreData.length) return;
+      $('exploreList').innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Loading beans from ICB…</p></div>';
       try {
         const res = await fetch(ICB_API);
-        exploreData = await res.json();
+        if (!res.ok) throw new Error('API returned ' + res.status);
+        const raw = await res.json();
+        // Handle both array and {data:[...]} formats
+        exploreData = Array.isArray(raw) ? raw : (raw.data || raw.products || raw.items || raw.results || []);
+        if (!exploreData.length) {
+          $('exploreList').innerHTML = '<div class="empty-state"><div class="icon">☕</div><p>No beans found. The ICB API may have changed.</p></div>';
+          console.warn('ICB response shape:', Object.keys(raw));
+          return;
+        }
         renderExplore();
       } catch (e) {
         console.error('Explore fetch failed', e);
-        $('exploreList').innerHTML = '<p>Failed to load bean directory.</p>';
+        $('exploreList').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Failed to load bean directory.<br><small>' + e.message + '</small></p></div>';
       }
     }
 
@@ -2530,14 +2536,12 @@
     function quickAdd(roaster, name, price, process, roast) {
       showPage('add');
       resetForm();
-      const row = document.querySelector('.item-row');
-      row.querySelector('[data-f="category"]').value = 'beans';
-      row.querySelector('[data-f="name"]').value = name;
-      row.querySelector('[data-f="roaster"]').value = roaster;
-      row.querySelector('[data-f="price"]').value = price;
-      // Map process/roast if possible
-      row.querySelector('[data-f="process"]').value = process;
-      row.querySelector('[data-f="roast_level"]').value = roast;
+      // itemCount is 1 after resetForm → addItemRow
+      $('item-cat-1').value = 'beans';
+      toggleBeansFields(1);
+      $('item-name-1').value = name;
+      $('item-roaster-1').value = roaster;
+      $('item-price-1').value = price;
       $('inp-vendor').value = roaster;
     }
 
@@ -2792,7 +2796,7 @@
         qty: 1
       };
     }
-    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+    // esc is defined at the top as a const
 
     /* ═══════════════════════════════════════════════════════════
        SAVE / EDIT / DELETE
@@ -3419,31 +3423,33 @@
 
       // Sync to D1
       if (jEditId) {
-        await fetch(API + '?route=journal', {
-          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
+        await authFetch(API + '?route=journal', {
+          method: 'PUT', body: JSON.stringify(entry)
         });
       } else {
-        await fetch(API + '?route=journal', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
+        await authFetch(API + '?route=journal', {
+          method: 'POST', body: JSON.stringify(entry)
         });
       }
       // Reload from D1 so all devices stay in sync
-      const jr = await fetch(API + '?route=journal');
-      const jd = await jr.json();
-      journal = (jd.journal || []).map(j => ({
-        ...j,
-        beanId: j.beanId || j.bean_id,
-        beanLabel: j.beanLabel || j.bean_label,
-        tastes: typeof j.tastes === 'string' ? JSON.parse(j.tastes || '[]') : (j.tastes || []),
-      }));
+      const jr = await authFetch(API + '?route=journal');
+      if (jr) {
+        const jd = await jr.json();
+        journal = (jd.journal || []).map(j => ({
+          ...j,
+          beanId: j.beanId || j.bean_id,
+          beanLabel: j.beanLabel || j.bean_label,
+          tastes: typeof j.tastes === 'string' ? JSON.parse(j.tastes || '[]') : (j.tastes || []),
+        }));
+      }
       closeJModal();
       renderJournal();
     }
 
     async function deleteJournalEntry(id) {
       if (!confirm('Delete this session?')) return;
-      await fetch(API, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+      await authFetch(API, {
+        method: 'POST',
         body: JSON.stringify({ action: 'deleteJournal', id })
       });
       journal = journal.filter(j => String(j.id) !== String(id));
@@ -3690,9 +3696,33 @@
 
     $('inp-date').valueAsDate = new Date();
     addItemRow();
-    updateUserUI(); // Initialize Auth UI
-    if (userToken) loadData(); // Load data only if logged in
     applyTheme();
+
+    // Google Identity Services init — fires when GSI library is ready
+    function initGoogleAuth() {
+      google.accounts.id.initialize({
+        client_id: '948876617439-3ht5ofkikeq6iunotqlrmprac34sccmd.apps.googleusercontent.com',
+        callback: handleCredentialResponse,
+        auto_select: false
+      });
+      updateUserUI();
+      if (userToken) loadData();
+    }
+
+    // GSI may already be loaded or may load later
+    if (window.google && window.google.accounts) {
+      initGoogleAuth();
+    } else {
+      // Poll for GSI readiness (it loads async defer)
+      const _gsiCheck = setInterval(() => {
+        if (window.google && window.google.accounts) {
+          clearInterval(_gsiCheck);
+          initGoogleAuth();
+        }
+      }, 100);
+      // Fallback: if logged in already, load data immediately
+      if (userToken) loadData();
+    }
   </script>
 
   <!-- ── BAG LIFECYCLE MODAL ─────────────────────────────── -->
