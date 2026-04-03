@@ -1,0 +1,3822 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brew Log</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    :root {
+      --cream: #F5EFE0;
+      --parchment: #EDE4CE;
+      --espresso: #2C1A0E;
+      --roast: #4A2C14;
+      --caramel: #C47D2A;
+      --honey: #E8A83E;
+      --steam: #F9F5ED;
+      --mid: #7A5C3A;
+      --light: #D4B483;
+      --shadow: rgba(44, 26, 14, 0.12);
+      --green: #5E8A3A;
+      --green-bg: rgba(94, 138, 58, 0.1);
+      --blue: #4A6FA5;
+      --blue-bg: rgba(74, 111, 165, 0.1);
+      --purple: #7A3A8A;
+      --purple-bg: rgba(122, 58, 138, 0.1);
+      --nav-h: 62px;
+      --transition: all 0.3s ease;
+    }
+
+    body.dark-mode {
+      --cream: #120C08;
+      --parchment: #1F150E;
+      --espresso: #F5EFE0;
+      --roast: #E8A83E;
+      --caramel: #D4B483;
+      --honey: #F5EFE0;
+      --steam: #1A1208;
+      --mid: #A68A64;
+      --light: #7A5C3A;
+      --shadow: rgba(0, 0, 0, 0.4);
+      --green: #8CC85A;
+      --green-bg: rgba(140, 200, 90, 0.15);
+      --blue: #7AABDF;
+      --blue-bg: rgba(122, 171, 223, 0.15);
+      --purple: #B47AC4;
+      --purple-bg: rgba(180, 122, 196, 0.15);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--cream);
+      color: var(--espresso);
+      font-family: "DM Sans", sans-serif;
+      min-height: 100vh;
+      padding-bottom: calc(var(--nav-h) + 1.5rem);
+      background-image: radial-gradient(ellipse at 15% 0%, rgba(196, 125, 42, .07) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 100%, rgba(74, 44, 20, .05) 0%, transparent 55%);
+      transition: background var(--transition), color var(--transition);
+    }
+
+    body.dark-mode {
+      background-image: radial-gradient(ellipse at 15% 0%, rgba(196, 125, 42, .03) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 100%, rgba(0, 0, 0, .4) 0%, transparent 55%);
+    }
+
+    /* ── BOTTOM NAV ─────────────────────────────────── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: var(--nav-h);
+      background: var(--steam);
+      border-top: 1.5px solid var(--parchment);
+      display: flex;
+      z-index: 300;
+      box-shadow: 0 -4px 24px rgba(44, 26, 14, .09);
+    }
+
+    .nav-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      color: var(--light);
+      transition: color .2s;
+      font-family: "DM Sans", sans-serif;
+      position: relative;
+      padding: 0;
+    }
+
+    .nav-btn.active {
+      color: var(--caramel);
+    }
+
+    .nav-btn.active::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 20%;
+      right: 20%;
+      height: 2.5px;
+      background: var(--caramel);
+      border-radius: 0 0 4px 4px;
+    }
+
+    .nav-icon {
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    .nav-label {
+      font-size: .58rem;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    /* ── PAGE SYSTEM ─────────────────────────────────── */
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+      animation: fadeUp .2s ease;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── TYPOGRAPHY & LAYOUT ────────────────────────── */
+    .page-header {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 1.8rem 1.5rem .8rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .page-header h1 {
+      font-family: "Playfair Display", serif;
+      font-size: 1.9rem;
+      font-weight: 400;
+      color: var(--espresso);
+      letter-spacing: -.02em;
+      line-height: 1.1;
+    }
+
+    .page-header h1 em {
+      color: var(--caramel);
+      font-style: italic;
+    }
+
+    .page-header .sub {
+      font-size: .72rem;
+      color: var(--mid);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-top: .25rem;
+      font-weight: 300;
+    }
+
+    .page-content {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 1.5rem 2rem;
+    }
+
+    /* ── THEME TOGGLE ─────────────────────────────────── */
+    .theme-toggle {
+      background: var(--steam);
+      border: 1.5px solid var(--parchment);
+      border-radius: 12px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--caramel);
+      font-size: 1.2rem;
+      transition: var(--transition);
+      box-shadow: 0 2px 8px var(--shadow);
+      margin-left: 0.8rem;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--caramel);
+      transform: translateY(-2px);
+    }
+
+    .theme-toggle:active {
+      transform: translateY(0);
+    }
+
+    /* ── CARDS ────────────────────────────────────────── */
+    .panel {
+      background: var(--steam);
+      border: 1px solid var(--parchment);
+      border-radius: 18px;
+      padding: 1.3rem 1.4rem;
+      margin-bottom: 1.1rem;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+
+    .panel-title {
+      font-family: "Playfair Display", serif;
+      font-size: .95rem;
+      font-weight: 400;
+      color: var(--roast);
+      margin-bottom: .9rem;
+    }
+
+    .section-label {
+      font-size: .67rem;
+      color: var(--mid);
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin: 1.5rem 0 .7rem;
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--parchment);
+    }
+
+    /* stat strips */
+    .stat-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: .75rem;
+      margin-bottom: 1.1rem;
+    }
+
+    .stat-strip.three {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .stat-card {
+      background: var(--steam);
+      border: 1px solid var(--parchment);
+      border-radius: 13px;
+      padding: .95rem 1rem;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .stat-num {
+      font-family: "Playfair Display", serif;
+      font-size: 1.35rem;
+      color: var(--roast);
+      line-height: 1;
+    }
+
+    .stat-label {
+      font-size: .66rem;
+      color: var(--mid);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-top: .22rem;
+    }
+
+    /* ── FORMS ────────────────────────────────────────── */
+    .form-divider {
+      font-size: .63rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--light);
+      font-weight: 500;
+      margin: 1rem 0 .65rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    .form-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--parchment);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+      margin-bottom: .75rem;
+    }
+
+    .form-row.three {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .form-row.full {
+      grid-template-columns: 1fr;
+    }
+
+    .form-label {
+      font-size: .68rem;
+      color: var(--mid);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: .28rem;
+      display: block;
+      font-weight: 400;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      background: var(--cream);
+      border: 1.5px solid var(--parchment);
+      border-radius: 10px;
+      padding: .58rem .85rem;
+      font-family: "DM Sans", sans-serif;
+      font-size: .85rem;
+      color: var(--espresso);
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--caramel);
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+      color: var(--light);
+    }
+
+    select {
+      appearance: none;
+      cursor: pointer;
+    }
+
+    textarea {
+      resize: none;
+      height: 54px;
+    }
+
+    /* pills */
+    .pill-group {
+      display: flex;
+      gap: .38rem;
+      flex-wrap: wrap;
+    }
+
+    .pill-opt {
+      background: var(--cream);
+      border: 1.5px solid var(--parchment);
+      border-radius: 999px;
+      padding: .3rem .82rem;
+      font-size: .74rem;
+      color: var(--mid);
+      cursor: pointer;
+      transition: all .18s;
+      font-family: "DM Sans", sans-serif;
+      user-select: none;
+    }
+
+    .pill-opt.selected {
+      background: var(--roast);
+      border-color: var(--roast);
+      color: var(--cream);
+    }
+
+    .pill-opt:hover:not(.selected) {
+      border-color: var(--caramel);
+      color: var(--caramel);
+    }
+
+    .pill-opt.multi.selected {
+      background: var(--caramel);
+      border-color: var(--caramel);
+      color: #fff;
+    }
+
+    /* Colored tasting note pills */
+    .group-floral {
+      --p-c: #e83e8c;
+      --p-bg: #e83e8c20;
+    }
+
+    .group-fruity {
+      --p-c: #dc3545;
+      --p-bg: #dc354520;
+    }
+
+    .group-sour {
+      --p-c: #9c9c18;
+      --p-bg: #9c9c1820;
+    }
+
+    .group-green {
+      --p-c: #28a745;
+      --p-bg: #28a74520;
+    }
+
+    .group-other {
+      --p-c: #6c757d;
+      --p-bg: #6c757d20;
+    }
+
+    .group-roasted {
+      --p-c: #8b4513;
+      --p-bg: #8b451320;
+    }
+
+    .group-spices {
+      --p-c: #e36a05;
+      --p-bg: #e36a0520;
+    }
+
+    .group-nutty {
+      --p-c: #b58800;
+      --p-bg: #b5880020;
+    }
+
+    .group-sweet {
+      --p-c: #d39e00;
+      --p-bg: #d39e0020;
+    }
+
+    .group-colored.pill-group .pill-opt {
+      background: var(--p-bg);
+      border-color: var(--p-bg);
+      color: var(--p-c);
+    }
+
+    .group-colored.pill-group .pill-opt:hover:not(.selected) {
+      border-color: var(--p-c) !important;
+    }
+
+    .group-colored.pill-group .pill-opt.selected {
+      background: var(--p-c) !important;
+      border-color: var(--p-c) !important;
+      color: #fff !important;
+    }
+
+    .beans-only {
+      transition: opacity .2s;
+    }
+
+    .beans-only.hidden {
+      opacity: .3;
+      pointer-events: none;
+    }
+
+    /* item rows */
+    .item-row {
+      background: var(--cream);
+      border: 1.5px solid var(--parchment);
+      border-radius: 12px;
+      padding: .9rem 1rem;
+      margin-bottom: .65rem;
+    }
+
+    .item-row-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: .55rem;
+    }
+
+    .item-num {
+      font-size: .67rem;
+      color: var(--mid);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .btn-rm {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--light);
+      font-size: 1rem;
+      transition: color .2s;
+    }
+
+    .btn-rm:hover {
+      color: #c0392b;
+    }
+
+    .btn-add-item {
+      background: none;
+      border: 1.5px dashed var(--parchment);
+      border-radius: 10px;
+      padding: .48rem 1rem;
+      width: 100%;
+      font-family: "DM Sans", sans-serif;
+      font-size: .8rem;
+      color: var(--mid);
+      cursor: pointer;
+      transition: all .2s;
+      margin-bottom: .75rem;
+    }
+
+    .btn-add-item:hover {
+      border-color: var(--caramel);
+      color: var(--caramel);
+    }
+
+    .combo-toggle {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin-bottom: .75rem;
+    }
+
+    .combo-toggle input[type="checkbox"] {
+      width: auto;
+      accent-color: var(--caramel);
+    }
+
+    .combo-toggle label {
+      font-size: .8rem;
+      color: var(--mid);
+      cursor: pointer;
+    }
+
+    .combo-price-wrap {
+      display: none;
+      margin-bottom: .75rem;
+    }
+
+    .combo-price-wrap.active {
+      display: block;
+    }
+
+    /* buttons */
+    .btn-primary {
+      background: var(--roast);
+      color: var(--cream);
+      border: none;
+      border-radius: 10px;
+      padding: .62rem 1.4rem;
+      font-family: "DM Sans", sans-serif;
+      font-size: .84rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+    }
+
+    .btn-primary:hover {
+      background: var(--caramel);
+    }
+
+    .btn-primary:active {
+      transform: scale(.98);
+    }
+
+    .btn-ghost {
+      background: none;
+      border: 1.5px solid var(--parchment);
+      border-radius: 10px;
+      padding: .6rem 1.1rem;
+      font-family: "DM Sans", sans-serif;
+      font-size: .8rem;
+      color: var(--mid);
+      cursor: pointer;
+      transition: all .2s;
+      margin-left: .45rem;
+    }
+
+    .btn-ghost:hover {
+      border-color: var(--caramel);
+      color: var(--caramel);
+    }
+
+    .editing-banner {
+      display: none;
+      background: rgba(196, 125, 42, .11);
+      border: 1px solid var(--parchment);
+      border-radius: 11px;
+      padding: .7rem .95rem;
+      margin-bottom: .9rem;
+      color: var(--roast);
+      font-size: .81rem;
+    }
+
+    .editing-banner.active {
+      display: block;
+    }
+
+    /* ── LOG CARDS ────────────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      gap: .45rem;
+      margin-bottom: .9rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: none;
+      border: 1.5px solid var(--parchment);
+      border-radius: 999px;
+      padding: .28rem .78rem;
+      font-size: .73rem;
+      color: var(--mid);
+      cursor: pointer;
+      transition: all .2s;
+      font-family: "DM Sans", sans-serif;
+    }
+
+    .filter-btn.active {
+      background: var(--caramel);
+      border-color: var(--caramel);
+      color: #fff;
+    }
+
+    .order-group {
+      margin-bottom: 1.1rem;
+    }
+
+    .order-group-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .45rem .85rem;
+      background: var(--parchment);
+      border-radius: 10px 10px 0 0;
+      flex-wrap: wrap;
+      gap: .4rem;
+    }
+
+    .og-left {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      flex-wrap: wrap;
+    }
+
+    .og-id {
+      font-family: "DM Mono", monospace;
+      font-size: .7rem;
+      color: var(--roast);
+    }
+
+    .og-meta {
+      font-size: .68rem;
+      color: var(--mid);
+    }
+
+    .og-total {
+      font-family: "Playfair Display", serif;
+      font-size: .95rem;
+      color: var(--roast);
+    }
+
+    .combo-badge {
+      font-size: .6rem;
+      background: rgba(196, 125, 42, .15);
+      color: var(--caramel);
+      border-radius: 999px;
+      padding: .09rem .42rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .og-actions {
+      display: flex;
+      gap: .3rem;
+      align-items: center;
+    }
+
+    .entry-card {
+      background: var(--steam);
+      border: 1px solid var(--parchment);
+      border-radius: 0;
+      padding: .8rem .95rem;
+      margin-bottom: 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: .5rem;
+      box-shadow: none;
+      transition: background .15s;
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid var(--parchment);
+    }
+
+    .order-group .entry-card:last-child {
+      border-radius: 0 0 12px 12px;
+    }
+
+    .order-group .entry-card:only-child {
+      border-radius: 12px;
+    }
+
+    .solo-card {
+      background: var(--steam);
+      border: 1px solid var(--parchment);
+      border-radius: 12px;
+      padding: .8rem .95rem;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: .5rem;
+      box-shadow: 0 1px 5px var(--shadow);
+      transition: box-shadow .2s, transform .2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .solo-card:hover {
+      box-shadow: 0 4px 14px var(--shadow);
+      transform: translateX(2px);
+    }
+
+    .entry-card::before,
+    .solo-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      border-radius: 3px 0 0 3px;
+    }
+
+    .type-beans::before {
+      background: var(--caramel);
+    }
+
+    .type-gears::before {
+      background: var(--mid);
+    }
+
+    .type-accessories::before {
+      background: var(--blue);
+    }
+
+    .entry-left,
+    .sc-left {
+      padding-left: .45rem;
+    }
+
+    .entry-name {
+      font-family: "Playfair Display", serif;
+      font-size: .93rem;
+      font-weight: 600;
+      color: var(--espresso);
+      line-height: 1.3;
+    }
+
+    .entry-meta {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      margin-top: .2rem;
+      flex-wrap: wrap;
+    }
+
+    .entry-vendor {
+      font-size: .7rem;
+      color: var(--mid);
+    }
+
+    .entry-date {
+      font-family: "DM Mono", monospace;
+      font-size: .68rem;
+      color: var(--light);
+    }
+
+    .entry-tag {
+      font-size: .6rem;
+      padding: .11rem .42rem;
+      border-radius: 999px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      font-weight: 500;
+    }
+
+    .tag-beans {
+      background: rgba(196, 125, 42, .12);
+      color: var(--caramel);
+    }
+
+    .tag-gears {
+      background: rgba(122, 92, 58, .12);
+      color: var(--mid);
+    }
+
+    .tag-accessories {
+      background: var(--blue-bg);
+      color: var(--blue);
+    }
+
+    .entry-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .33rem;
+      margin-top: .38rem;
+    }
+
+    .epill {
+      font-size: .61rem;
+      padding: .11rem .48rem;
+      border-radius: 999px;
+      background: var(--parchment);
+      color: var(--mid);
+    }
+
+    .epill.brew {
+      background: rgba(196, 125, 42, .1);
+      color: var(--caramel);
+    }
+
+    .epill.process {
+      background: var(--green-bg);
+      color: var(--green);
+    }
+
+    .entry-notes {
+      font-size: .72rem;
+      color: var(--mid);
+      margin-top: .28rem;
+      font-style: italic;
+    }
+
+    .entry-right,
+    .sc-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: .35rem;
+    }
+
+    .entry-price {
+      font-family: "Playfair Display", serif;
+      font-size: 1.02rem;
+      color: var(--roast);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .entry-price.combo-part {
+      color: var(--light);
+      font-size: .72rem;
+      font-family: "DM Mono", monospace;
+    }
+
+    .action-btn {
+      background: none;
+      border: 1px solid var(--parchment);
+      border-radius: 7px;
+      padding: .22rem .48rem;
+      font-size: .68rem;
+      color: var(--mid);
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .action-btn:hover {
+      border-color: var(--caramel);
+      color: var(--caramel);
+    }
+
+    .action-btn.del:hover {
+      border-color: #c0392b;
+      color: #c0392b;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--light);
+    }
+
+    .empty-state .icon {
+      font-size: 2.2rem;
+      margin-bottom: .7rem;
+    }
+
+    .empty-state p {
+      font-size: .82rem;
+      font-style: italic;
+    }
+
+    /* ── SHELF ─────────────────────────────────────────── */
+    .shelf-card {
+      background: var(--steam);
+      border: 1px solid var(--parchment);
+      border-radius: 16px;
+      padding: 1.1rem 1.2rem;
+      margin-bottom: .9rem;
+      box-shadow: 0 2px 8px var(--shadow);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: .7rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shelf-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      border-radius: 3px 0 0 3px;
+      background: var(--caramel);
+    }
+
+    .shelf-card.finished::before {
+      background: var(--light);
+    }
+
+    .shelf-card.finished {
+      opacity: .65;
+    }
+
+    .shelf-left {
+      padding-left: .45rem;
+    }
+
+    .shelf-name {
+      font-family: "Playfair Display", serif;
+      font-size: .97rem;
+      font-weight: 600;
+      color: var(--espresso);
+    }
+
+    .shelf-roaster {
+      font-size: .7rem;
+      color: var(--mid);
+      margin-top: .18rem;
+    }
+
+    .shelf-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .32rem;
+      margin-top: .4rem;
+    }
+
+    .shelf-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: .4rem;
+    }
+
+    .shelf-price {
+      font-family: "Playfair Display", serif;
+      font-size: 1rem;
+      color: var(--roast);
+      font-weight: 600;
+    }
+
+    .shelf-date {
+      font-family: "DM Mono", monospace;
+      font-size: .66rem;
+      color: var(--light);
+    }
+
+    .btn-finish {
+      background: none;
+      border: 1.5px solid var(--parchment);
+      border-radius: 8px;
+      padding: .24rem .6rem;
+      font-size: .68rem;
+      color: var(--mid);
+      cursor: pointer;
+      transition: all .2s;
+      font-family: "DM Sans", sans-serif;
+    }
+
+    .btn-finish:hover {
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .btn-finish.done {
+      border-color: var(--light);
+      color: var(--light);
+    }
+
+    .freshness-bar-wrap {
+      margin-top: .55rem;
+    }
+
+    .freshness-label {
+      font-size: .63rem;
+      color: var(--mid);
+      letter-spacing: .06em;
+      margin-bottom: .22rem;
+    }
+
+    .freshness-track {
+      height: 5px;
+      background: var(--parchment);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .freshness-fill {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .6s ease;
+    }
+
+    .fresh-green {
+      background: var(--green);
+    }
+
+    .fresh-amber {
+      background: var(--caramel);
+    }
+
+    .fresh-red {
+      background: #c0392b;
+    }
+
+    /* ── PROCESS PAGE ──────────────────────────────────── */
+    .process-group {
+      margin-bottom: 1.8rem;
+    }
+
+    .process-header {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      margin-bottom: .8rem;
+    }
+
+    .process-icon {
+      font-size: 1.6rem;
+      line-height: 1;
+    }
+
+    .process-name {
+      font-family: "Playfair Display", serif;
+      font-size: 1.15rem;
+      color: var(--roast);
+      font-weight: 400;
+    }
+
+    .process-count {
+      font-size: .68rem;
+      color: var(--mid);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-top: .1rem;
+    }
+
+    .process-card {
+      background: var(--steam);
+      border: 1px solid var(--parchment);
+      border-radius: 14px;
+      padding: .95rem 1.1rem;
+      margin-bottom: .6rem;
+      box-shadow: 0 1px 6px var(--shadow);
+    }
+
+    .process-card-name {
+      font-family: "Playfair Display", serif;
+      font-size: .94rem;
+      font-weight: 600;
+      color: var(--espresso);
+    }
+
+    .process-card-meta {
+      display: flex;
+      align-items: center;
+      gap: .55rem;
+      margin-top: .2rem;
+      flex-wrap: wrap;
+    }
+
+    .process-card-roaster {
+      font-size: .7rem;
+      color: var(--mid);
+    }
+
+    .process-card-date {
+      font-family: "DM Mono", monospace;
+      font-size: .68rem;
+      color: var(--light);
+    }
+
+    .process-card-price {
+      font-family: "Playfair Display", serif;
+      font-size: .95rem;
+      color: var(--roast);
+      font-weight: 600;
+    }
+
+    /* ── JOURNAL ────────────────────────────────────────── */
+    .journal-entry {
+      background: var(--steam);
+      border: 1px solid var(--parchment);
+      border-radius: 16px;
+      padding: 1.1rem 1.2rem;
+      margin-bottom: .9rem;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .je-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .7rem;
+    }
+
+    .je-title {
+      font-family: "Playfair Display", serif;
+      font-size: .97rem;
+      font-weight: 600;
+      color: var(--espresso);
+    }
+
+    .je-date {
+      font-family: "DM Mono", monospace;
+      font-size: .68rem;
+      color: var(--light);
+      white-space: nowrap;
+      margin-top: .18rem;
+    }
+
+    .je-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .35rem;
+      margin-top: .4rem;
+    }
+
+    .je-notes {
+      font-size: .78rem;
+      color: var(--mid);
+      margin-top: .5rem;
+      line-height: 1.5;
+    }
+
+    .rating-stars {
+      display: flex;
+      gap: .2rem;
+      margin-top: .4rem;
+    }
+
+    .star {
+      font-size: 1rem;
+      cursor: pointer;
+      color: var(--parchment);
+      transition: color .15s;
+    }
+
+    .star.filled,
+    .star:hover,
+    .star.hover {
+      color: var(--honey);
+    }
+
+    .tasting-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .33rem;
+      margin-top: .4rem;
+    }
+
+    .taste-chip {
+      font-size: .62rem;
+      padding: .12rem .5rem;
+      border-radius: 999px;
+      background: var(--purple-bg);
+      color: var(--purple);
+      font-weight: 400;
+    }
+
+    .je-actions {
+      display: flex;
+      gap: .35rem;
+      margin-top: .6rem;
+    }
+
+    /* journal form in modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(44, 26, 14, .4);
+      backdrop-filter: blur(3px);
+      z-index: 400;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+      overflow-y: auto;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--cream);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 600px;
+      margin: auto;
+      box-shadow: 0 20px 60px rgba(44, 26, 14, .25);
+      animation: fadeUp .22s ease;
+    }
+
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.4rem 0;
+    }
+
+    .modal-title {
+      font-family: "Playfair Display", serif;
+      font-size: 1.05rem;
+      font-weight: 400;
+      color: var(--roast);
+    }
+
+    .btn-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--mid);
+      font-size: 1.1rem;
+      padding: 4px;
+      transition: color .2s;
+    }
+
+    .btn-close:hover {
+      color: var(--espresso);
+    }
+
+    .modal-body {
+      padding: 1.1rem 1.4rem 1.5rem;
+    }
+
+    /* ── INSIGHTS ────────────────────────────────────────── */
+    .insights-header {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 1.8rem 1.5rem .5rem;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .insights-header h1 {
+      font-family: "Playfair Display", serif;
+      font-size: 1.9rem;
+      font-weight: 400;
+      color: var(--espresso);
+      letter-spacing: -.02em;
+    }
+
+    .insights-header h1 em {
+      color: var(--caramel);
+      font-style: italic;
+    }
+
+    .ins-strip {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 1.5rem .5rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .75rem;
+      margin-bottom: .8rem;
+    }
+
+    .ins-card {
+      background: var(--steam);
+      border: 1px solid var(--parchment);
+      border-radius: 13px;
+      padding: .95rem 1rem;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .ins-num {
+      font-family: "Playfair Display", serif;
+      font-size: 1.35rem;
+      color: var(--roast);
+    }
+
+    .ins-label {
+      font-size: .66rem;
+      color: var(--mid);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-top: .22rem;
+    }
+
+    .charts-grid {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .9rem;
+      margin-bottom: 1rem;
+    }
+
+    .charts-grid.single {
+      grid-template-columns: 1fr;
+    }
+
+    .chart-card {
+      background: var(--steam);
+      border: 1px solid var(--parchment);
+      border-radius: 16px;
+      padding: 1.2rem 1.3rem;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+
+    .chart-ttl {
+      font-size: .69rem;
+      color: var(--mid);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-weight: 500;
+      margin-bottom: .9rem;
+    }
+
+    .bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: .55rem;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+    }
+
+    .bar-label {
+      font-size: .72rem;
+      color: var(--mid);
+      width: 130px;
+      flex-shrink: 0;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 9px;
+      background: var(--parchment);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--caramel), var(--honey));
+      transition: width .7s cubic-bezier(.16, 1, .3, 1);
+    }
+
+    .bar-fill.green {
+      background: linear-gradient(90deg, var(--green), #8CC85A);
+    }
+
+    .bar-fill.blue {
+      background: linear-gradient(90deg, var(--blue), #7AABDF);
+    }
+
+    .bar-fill.purple {
+      background: linear-gradient(90deg, var(--purple), #B47AC4);
+    }
+
+    .bar-fill.mid {
+      background: linear-gradient(90deg, var(--mid), #A08060);
+    }
+
+    .bar-val {
+      font-family: "DM Mono", monospace;
+      font-size: .69rem;
+      color: var(--mid);
+      width: 72px;
+      flex-shrink: 0;
+    }
+
+    .insight-callout {
+      background: var(--steam);
+      border: 1px solid var(--parchment);
+      border-radius: 14px;
+      padding: 1rem 1.2rem;
+      margin-bottom: .8rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .callout-icon {
+      font-size: 1.6rem;
+    }
+
+    .callout-text {
+      font-size: .82rem;
+      color: var(--mid);
+      line-height: 1.5;
+    }
+
+    .callout-text strong {
+      color: var(--roast);
+      font-weight: 500;
+    }
+
+    /* ── ADD PAGE HEADER (matches existing log header look) ── */
+    .add-page-header {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 1.8rem 1.5rem .8rem;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    @media(max-width:540px) {
+      .stat-strip {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .stat-strip.four {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .form-row,
+      .form-row.three {
+        grid-template-columns: 1fr;
+      }
+
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ins-strip {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .bar-label {
+        width: 90px;
+        font-size: .65rem;
+      }
+    }
+
+    /* ── BAG LIFECYCLE MODAL ───────────────────────────────── */
+    .bag-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(44, 26, 14, .45);
+      z-index: 500;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .bag-modal-overlay.hidden {
+      display: none;
+    }
+
+    .bag-modal {
+      background: var(--steam);
+      border-radius: 22px 22px 0 0;
+      padding: 1.5rem 1.5rem 2.5rem;
+      width: 100%;
+      max-width: 820px;
+      max-height: 88vh;
+      overflow-y: auto;
+      animation: slideUpModal .22s ease;
+    }
+
+    @keyframes slideUpModal {
+      from {
+        transform: translateY(40px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .bag-modal-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--parchment);
+      border-radius: 999px;
+      margin: 0 auto .9rem;
+    }
+
+    .bag-modal-title {
+      font-family: "Playfair Display", serif;
+      font-size: 1.15rem;
+      color: var(--espresso);
+      margin-bottom: 1.1rem;
+      line-height: 1.3;
+    }
+
+    .bag-modal-title em {
+      color: var(--caramel);
+      font-style: italic;
+    }
+
+    .gram-track {
+      height: 7px;
+      background: var(--parchment);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-top: .3rem;
+    }
+
+    .gram-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--caramel);
+      transition: width .45s ease;
+    }
+
+    .gram-fill.over {
+      background: #c0392b;
+    }
+
+    .gram-entry-row {
+      display: grid;
+      grid-template-columns: 1fr 90px 36px;
+      gap: .5rem;
+      align-items: end;
+      margin-bottom: .45rem;
+    }
+
+    .gram-entry-row input {
+      margin-bottom: 0;
+    }
+
+    .btn-rm-gram {
+      background: none;
+      border: 1px solid var(--parchment);
+      border-radius: 7px;
+      padding: .45rem .5rem;
+      color: var(--light);
+      cursor: pointer;
+      font-size: .75rem;
+      transition: all .2s;
+      width: 36px;
+      line-height: 1;
+    }
+
+    .btn-rm-gram:hover {
+      border-color: #c0392b;
+      color: #c0392b;
+    }
+
+
+    /* ── PIN LOCK OVERLAY ─────────────────────────────── */
+    #pin-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--cream);
+      background-image:
+        radial-gradient(ellipse at 15% 0%, rgba(196, 125, 42, .10) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 100%, rgba(74, 44, 20, .07) 0%, transparent 55%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 0;
+      transition: opacity .4s ease;
+    }
+
+    #pin-overlay.unlocking {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pin-card {
+      background: var(--steam);
+      border: 1.5px solid var(--parchment);
+      border-radius: 20px;
+      padding: 2.5rem 2rem 2rem;
+      max-width: 340px;
+      width: 90%;
+      box-shadow: 0 8px 40px rgba(44, 26, 14, .13);
+      text-align: center;
+      animation: fadeUp .3s ease;
+    }
+
+    .pin-logo {
+      font-size: 2.2rem;
+      margin-bottom: .4rem;
+    }
+
+    .pin-title {
+      font-family: "Playfair Display", serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      color: var(--espresso);
+      letter-spacing: -.02em;
+      margin-bottom: .2rem;
+    }
+
+    .pin-title em {
+      color: var(--caramel);
+      font-style: italic;
+    }
+
+    .pin-sub {
+      font-size: .7rem;
+      color: var(--mid);
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      font-weight: 300;
+      margin-bottom: 1.8rem;
+    }
+
+    .pin-dots {
+      display: flex;
+      justify-content: center;
+      gap: .75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--light);
+      background: transparent;
+      transition: background .15s, border-color .15s, transform .15s;
+    }
+
+    .pin-dot.filled {
+      background: var(--caramel);
+      border-color: var(--caramel);
+      transform: scale(1.15);
+    }
+
+    .pin-dot.error {
+      background: #c0392b;
+      border-color: #c0392b;
+    }
+
+    .pin-dot.success {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .pin-keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .6rem;
+      margin-bottom: 1rem;
+    }
+
+    .pin-key {
+      border: 1.5px solid var(--parchment);
+      background: var(--cream);
+      color: var(--espresso);
+      border-radius: 12px;
+      padding: .9rem .5rem;
+      font-family: "DM Mono", monospace;
+      font-size: 1.2rem;
+      font-weight: 400;
+      cursor: pointer;
+      transition: background .15s, transform .1s, box-shadow .15s;
+      user-select: none;
+    }
+
+    .pin-key:hover {
+      background: var(--parchment);
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+
+    .pin-key:active {
+      transform: scale(.93);
+      background: var(--light);
+    }
+
+    .pin-key.pin-del {
+      font-size: 1rem;
+      color: var(--mid);
+    }
+
+    .pin-key.pin-blank {
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .pin-error-msg {
+      font-size: .72rem;
+      color: #c0392b;
+      letter-spacing: .05em;
+      min-height: 1.1em;
+      margin-top: -.3rem;
+      font-weight: 400;
+      animation: shake .3s ease;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0)
+      }
+
+      20% {
+        transform: translateX(-6px)
+      }
+
+      40% {
+        transform: translateX(6px)
+      }
+
+      60% {
+        transform: translateX(-4px)
+      }
+
+      80% {
+        transform: translateX(4px)
+      }
+    }
+    /* ── EXPLORE GRID ──────────────────────────────────── */
+    .explore-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .explore-card {
+      background: var(--steam);
+      border: 1.5px solid var(--parchment);
+      border-radius: 16px;
+      padding: 1.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+    .explore-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px var(--shadow);
+    }
+    .explore-roaster {
+      font-size: 0.7rem;
+      color: var(--mid);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .explore-name {
+      font-family: "Playfair Display", serif;
+      font-size: 1.1rem;
+      color: var(--espresso);
+      line-height: 1.2;
+    }
+    .explore-price {
+      font-weight: 600;
+      color: var(--caramel);
+    }
+    .explore-meta {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 1.5px solid var(--parchment);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- PIN LOCK OVERLAY -->
+  <div id="pin-overlay">
+    <div class="pin-card">
+      <div class="pin-logo">☕</div>
+      <h2 class="pin-title">Brew <em>Log</em></h2>
+      <p class="pin-sub">Enter PIN to continue</p>
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot" id="d0"></div>
+        <div class="pin-dot" id="d1"></div>
+        <div class="pin-dot" id="d2"></div>
+        <div class="pin-dot" id="d3"></div>
+      </div>
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="pinPress('1')">1</button>
+        <button class="pin-key" onclick="pinPress('2')">2</button>
+        <button class="pin-key" onclick="pinPress('3')">3</button>
+        <button class="pin-key" onclick="pinPress('4')">4</button>
+        <button class="pin-key" onclick="pinPress('5')">5</button>
+        <button class="pin-key" onclick="pinPress('6')">6</button>
+        <button class="pin-key" onclick="pinPress('7')">7</button>
+        <button class="pin-key" onclick="pinPress('8')">8</button>
+        <button class="pin-key" onclick="pinPress('9')">9</button>
+        <button class="pin-key pin-blank" disabled></button>
+        <button class="pin-key" onclick="pinPress('0')">0</button>
+        <button class="pin-key pin-del" onclick="pinDel()">⌫</button>
+      </div>
+      <p class="pin-error-msg" id="pinErr"></p>
+    </div>
+  </div>
+
+
+  <!-- ══════════════ PAGES ══════════════ -->
+
+  <!-- ── LOG PAGE ────────────────────────────────────────── -->
+  <div class="page active" id="page-log">
+    <div class="page-header">
+      <div style="display: flex; align-items: flex-start; flex: 1;">
+        <div>
+          <h1>Brew <em>Log</em></h1>
+          <div class="sub">Your coffee journey · Gaurav</div>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+        <div class="user-profile"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:.7rem;color:var(--mid);letter-spacing:.09em;text-transform:uppercase">Total Spent</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.7rem;color:var(--roast);line-height:1.1"
+          id="grandTotal">₹0</div>
+      </div>
+    </div>
+    <div class="page-content">
+      <div class="stat-strip" id="logStatStrip">
+        <div class="stat-card">
+          <div class="stat-num" id="statBeans">₹0</div>
+          <div class="stat-label">Beans</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statGears">₹0</div>
+          <div class="stat-label">Gears</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statAcc">₹0</div>
+          <div class="stat-label">Accessories</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="statCount">0</div>
+          <div class="stat-label">Entries</div>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('beans',this)">Beans</button>
+        <button class="filter-btn" onclick="setFilter('gears',this)">Gears</button>
+        <button class="filter-btn" onclick="setFilter('accessories',this)">Accessories</button>
+      </div>
+      <div id="entriesList"></div>
+    </div>
+  </div>
+
+  <!-- ── SHELF PAGE ───────────────────────────────────────── -->
+  <div class="page" id="page-shelf">
+    <div class="page-header">
+      <div style="display: flex; align-items: flex-start; flex: 1;">
+        <div>
+          <h1>The <em>Shelf</em></h1>
+          <div class="sub">Beans in rotation</div>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+        <div class="user-profile"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:.7rem;color:var(--mid);letter-spacing:.09em;text-transform:uppercase">On Shelf</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.7rem;color:var(--roast);line-height:1.1"
+          id="shelfCount">0</div>
+      </div>
+    </div>
+    <div class="page-content">
+      <div class="stat-strip" style="grid-template-columns:1fr 1fr">
+        <div class="stat-card">
+          <div class="stat-num" id="shelfActive">0</div>
+          <div class="stat-label">Active Bags</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="shelfFinished">0</div>
+          <div class="stat-label">Finished</div>
+        </div>
+      </div>
+      <div class="section-label">Currently Open</div>
+      <div id="shelfActive-list"></div>
+      <div class="section-label" id="shelfFinishedLabel" style="display:none">Finished</div>
+      <div id="shelfFinished-list"></div>
+    </div>
+  </div>
+
+  <!-- ── PROCESS PAGE ─────────────────────────────────────── -->
+  <div class="page" id="page-process">
+    <div class="page-header">
+      <div style="display: flex; align-items: flex-start; flex: 1;">
+        <div>
+          <h1>Beans by <em>Process</em></h1>
+          <div class="sub">Washed · Natural · Honey · Anaerobic</div>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+        <div class="user-profile"></div>
+      </div>
+    </div>
+    <div class="page-content">
+      <div id="processList"></div>
+    </div>
+  </div>
+
+  <!-- ── JOURNAL PAGE ─────────────────────────────────────── -->
+  <div class="page" id="page-journal">
+    <div class="page-header">
+      <div style="display: flex; align-items: flex-start; flex: 1;">
+        <div>
+          <h1>Brew <em>Journal</em></h1>
+          <div class="sub">Sessions, tasting notes, ratings</div>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+        <div class="user-profile"></div>
+      </div>
+      <button class="btn-primary" onclick="openJournalModal()">+ New Session</button>
+    </div>
+    <div class="page-content">
+      <div class="stat-strip three">
+        <div class="stat-card">
+          <div class="stat-num" id="jsTotal">0</div>
+          <div class="stat-label">Sessions</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="jsAvgRating">—</div>
+          <div class="stat-label">Avg Rating</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" id="jsFavMethod">—</div>
+          <div class="stat-label">Fav Brewer</div>
+        </div>
+      </div>
+      <div id="journalList"></div>
+    </div>
+  </div>
+
+  <!-- ── INSIGHTS PAGE ───────────────────────────────────── -->
+  <div class="page" id="page-insights">
+    <div class="insights-header">
+      <div style="display: flex; align-items: flex-start; flex: 1;">
+        <div>
+          <h1>In<em>sights</em></h1>
+          <div
+            style="font-size:.72rem;color:var(--mid);letter-spacing:.1em;text-transform:uppercase;margin-top:.25rem;font-weight:300">
+            Spend analytics</div>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+        <div class="user-profile"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:.7rem;color:var(--mid);letter-spacing:.09em;text-transform:uppercase">Total</div>
+        <div style="font-family:'Playfair Display',serif;font-size:1.7rem;color:var(--roast)" id="ins-total-h">₹0</div>
+      </div>
+    </div>
+    <div class="ins-strip">
+      <div class="ins-card">
+        <div class="ins-num" id="ins-orders">0</div>
+        <div class="ins-label">Orders</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-num" id="ins-avg">₹0</div>
+        <div class="ins-label">Avg / Order</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-num" id="ins-beans-pct">0%</div>
+        <div class="ins-label">Beans Share</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-num" id="ins-top-vendor">—</div>
+        <div class="ins-label">Top Vendor</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-num" id="ins-roasters">0</div>
+        <div class="ins-label">Roasters</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-num" id="ins-cpg">₹0</div>
+        <div class="ins-label">Avg ₹/100g</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-num" id="ins-ppc">—</div>
+        <div class="ins-label">Price / Cup</div>
+      </div>
+      <div class="ins-card">
+        <div class="ins-num" id="ins-total-kg">—</div>
+        <div class="ins-label">Total kg Bought</div>
+      </div>
+    </div>
+    <div style="max-width:820px;margin:0 auto;padding:0 1.5rem .8rem;" id="insCallouts"></div>
+    <div class="charts-grid single" style="margin-bottom:.9rem">
+      <div class="chart-card">
+        <div class="chart-ttl">Monthly Spend</div>
+        <canvas id="barChart" style="max-height:180px"></canvas>
+      </div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-ttl">Spend by Category</div>
+        <canvas id="pieChart" style="max-height:190px"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-ttl">Category Over Time</div>
+        <canvas id="lineChart" style="max-height:190px"></canvas>
+      </div>
+    </div>
+    <div style="max-width:820px;margin:0 auto;padding:0 1.5rem .9rem">
+      <div class="chart-card">
+        <div class="chart-ttl">Top Vendors</div>
+        <div class="bar-list" id="vendorBarList"></div>
+      </div>
+    </div>
+    <div class="charts-grid" style="margin-bottom:.9rem">
+      <div class="chart-card">
+        <div class="chart-ttl">Coffee Type Split</div>
+        <div class="bar-list" id="typeBarList"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-ttl">Beans × Brewer</div>
+        <div class="bar-list" id="brewBarList"></div>
+      </div>
+    </div>
+    <div style="max-width:820px;margin:0 auto;padding:0 1.5rem 2rem">
+      <div class="chart-card">
+        <div class="chart-ttl">Process Breakdown (Beans Spend)</div>
+        <div class="bar-list" id="processBarList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── EXPLORE PAGE (ICB DIRECTORY) ───────────────────── -->
+  <div class="page" id="page-explore">
+    <div class="page-header">
+      <div style="display: flex; align-items: flex-start; flex: 1;">
+        <div>
+          <h1>Explore <em>Beans</em></h1>
+          <div class="sub">Indian Coffee Directory</div>
+        </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+        <div class="user-profile"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:.7rem;color:var(--mid);letter-spacing:.09em;text-transform:uppercase">Direct from ICB</div>
+      </div>
+    </div>
+    <div class="page-content">
+      <div class="panel">
+        <input type="text" id="exploreSearch" placeholder="Search roasters, beans, regions..." oninput="filterExplore()">
+      </div>
+      <div id="exploreList" class="explore-grid"></div>
+    </div>
+  </div>
+  <div class="page" id="page-add">
+    <div class="page-header">
+      <div style="display: flex; align-items: flex-start; flex: 1;">
+        <h1 id="addPageTitle">New <em>Order</em></h1>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
+        <div class="user-profile"></div>
+      </div>
+    </div>
+    <div class="page-content">
+      <div id="editBanner" class="editing-banner"></div>
+      <div class="panel">
+        <div class="panel-title" id="formTitle">Order Details</div>
+        <div class="form-row">
+          <div class="field">
+            <label class="form-label">Date</label>
+            <input type="date" id="inp-date">
+          </div>
+          <div class="field">
+            <label class="form-label">Order ID <span
+                style="font-size:.62rem;color:var(--light)">(optional)</span></label>
+            <input type="text" id="inp-order" placeholder="e.g. 577387">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="field">
+            <label class="form-label">Vendor / Shop</label>
+            <input type="text" id="inp-vendor" placeholder="e.g. Blue Tokai, Amazon">
+          </div>
+        </div>
+        <div class="combo-toggle">
+          <input type="checkbox" id="inp-combo" onchange="toggleCombo()">
+          <label for="inp-combo">Combo deal — one price covers all items</label>
+        </div>
+        <div class="combo-price-wrap" id="comboPriceWrap">
+          <label class="form-label">Total Combo Price (₹)</label>
+          <input type="number" id="inp-combo-price" placeholder="e.g. 1640">
+        </div>
+        <div class="form-divider">Items in this Order</div>
+        <div id="itemsList"></div>
+        <button class="btn-add-item" onclick="addItemRow()">+ Add another item</button>
+        <div>
+          <button class="btn-primary" onclick="saveOrder()" id="saveBtn">☕ Save Order</button>
+          <button class="btn-ghost" onclick="resetForm()">Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── JOURNAL MODAL ─────────────────────────────────── -->
+  <div class="modal-backdrop" id="journalModal" onclick="maybeCloseJModal(event)">
+    <div class="modal">
+      <div class="modal-head">
+        <span class="modal-title" id="jModalTitle">New Brew Session</span>
+        <button class="btn-close" onclick="closeJModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row three">
+          <div class="field"><label class="form-label">Date</label><input type="date" id="j-date"></div>
+          <div class="field"><label class="form-label">Brewer</label>
+            <select id="j-brewer">
+              <option value="">Select</option>
+              <option>French Press</option>
+              <option>Cafflano Kompresso</option>
+              <option>Moka Pot</option>
+              <option>V60</option>
+              <option>AeroPress</option>
+              <option>Espresso Machine</option>
+              <option>Cold Brew</option>
+              <option>Siphon</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="field"><label class="form-label">Grinder</label>
+            <select id="j-grinder">
+              <option value="">Select</option>
+              <option value="1Zpresso Q Air">1Zpresso Q Air</option>
+              <option value="Timemore C2/C3">Timemore C2/C3</option>
+              <option value="Commandante C40">Commandante C40</option>
+              <option value="Fellow Ode">Fellow Ode</option>
+              <option value="Niche Zero">Niche Zero</option>
+              <option value="Kingrinder K6">Kingrinder K6</option>
+              <option value="Pre-ground">Pre-ground</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="field"><label class="form-label">Bean (link to your shelf)</label>
+            <select id="j-bean">
+              <option value="">— Select a bean —</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row three">
+          <div class="field"><label class="form-label">Dose (g)</label><input type="number" id="j-dose"
+              placeholder="18"></div>
+          <div class="field"><label class="form-label">Yield (ml)</label><input type="number" id="j-yield"
+              placeholder="250"></div>
+          <div class="field"><label class="form-label">Time (min)</label><input type="number" id="j-time"
+              placeholder="4" step="0.5"></div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label class="form-label">Water Temp (°C)</label><input type="number" id="j-temp"
+              placeholder="94"></div>
+          <div class="field"><label class="form-label">Grind Setting</label><input type="text" id="j-grind"
+              placeholder="e.g. 3.5 on Q Air"></div>
+        </div>
+        <div class="field" style="margin-bottom:.75rem">
+          <label class="form-label">Rating</label>
+          <div class="rating-stars" id="jRatingStars">
+            <span class="star" data-v="1" onclick="setRating(1)">★</span>
+            <span class="star" data-v="2" onclick="setRating(2)">★</span>
+            <span class="star" data-v="3" onclick="setRating(3)">★</span>
+            <span class="star" data-v="4" onclick="setRating(4)">★</span>
+            <span class="star" data-v="5" onclick="setRating(5)">★</span>
+          </div>
+        </div>
+        <div class="field" style="margin-bottom:.75rem">
+          <label class="form-label">Tasting Notes (tap to select)</label>
+          <div id="tastePills" style="max-height:190px; overflow-y:auto; padding-right:.4rem; scrollbar-width:thin">
+            <div class="group-colored group-floral"
+              style="font-size:.65rem; color:var(--p-c); letter-spacing:.05em; text-transform:uppercase; margin-bottom:.25rem; font-weight:600">
+              Floral</div>
+            <div class="pill-group group-colored group-floral" style="margin-bottom:.7rem">
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Black Tea</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Chamomile</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Rose</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Jasmine</span>
+            </div>
+            <div class="group-colored group-fruity"
+              style="font-size:.65rem; color:var(--p-c); letter-spacing:.05em; text-transform:uppercase; margin-bottom:.25rem; font-weight:600">
+              Fruity</div>
+            <div class="pill-group group-colored group-fruity" style="margin-bottom:.7rem">
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Blackberry</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Raspberry</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Blueberry</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Strawberry</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Raisin</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Prune</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Coconut</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Cherry</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Pomegranate</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Pineapple</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Grape</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Apple</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Peach</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Pear</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Grapefruit</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Orange</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Lemon</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Lime</span>
+            </div>
+            <div class="group-colored group-sour"
+              style="font-size:.65rem; color:var(--p-c); letter-spacing:.05em; text-transform:uppercase; margin-bottom:.25rem; font-weight:600">
+              Sour/Fermented</div>
+            <div class="pill-group group-colored group-sour" style="margin-bottom:.7rem">
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Sour Aromatics</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Acetic Acid</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Butyric Acid</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Isovaleric Acid</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Citric Acid</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Malic Acid</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Winey</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Whiskey</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Fermented</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Overripe</span>
+            </div>
+            <div class="group-colored group-green"
+              style="font-size:.65rem; color:var(--p-c); letter-spacing:.05em; text-transform:uppercase; margin-bottom:.25rem; font-weight:600">
+              Green/Vegetative</div>
+            <div class="pill-group group-colored group-green" style="margin-bottom:.7rem">
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Olive Oil</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Raw</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Under-ripe</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Peapod</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Fresh</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Dark Green</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Vegetative</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Hay-like</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Herb-like</span>
+            </div>
+            <div class="group-colored group-other"
+              style="font-size:.65rem; color:var(--p-c); letter-spacing:.05em; text-transform:uppercase; margin-bottom:.25rem; font-weight:600">
+              Other</div>
+            <div class="pill-group group-colored group-other" style="margin-bottom:.7rem">
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Stale</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Cardboard</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Papery</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Woody</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Moldy/Damp</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Musty/Dusty</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Musty/Earthy</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Animalic</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Meaty/Brothy</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Phenolic</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Bitter</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Salty</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Medicinal</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Petroleum</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Skunky</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Rubber</span>
+            </div>
+            <div class="group-colored group-roasted"
+              style="font-size:.65rem; color:var(--p-c); letter-spacing:.05em; text-transform:uppercase; margin-bottom:.25rem; font-weight:600">
+              Roasted</div>
+            <div class="pill-group group-colored group-roasted" style="margin-bottom:.7rem">
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Pipe Tobacco</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Tobacco</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Brown</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Roast</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Smoky</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Ashy</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Acrid</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Grain</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Malt</span>
+            </div>
+            <div class="group-colored group-spices"
+              style="font-size:.65rem; color:var(--p-c); letter-spacing:.05em; text-transform:uppercase; margin-bottom:.25rem; font-weight:600">
+              Spices</div>
+            <div class="pill-group group-colored group-spices" style="margin-bottom:.7rem">
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Pepper</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Anise</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Nutmeg</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Cinnamon</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Clove</span>
+            </div>
+            <div class="group-colored group-nutty"
+              style="font-size:.65rem; color:var(--p-c); letter-spacing:.05em; text-transform:uppercase; margin-bottom:.25rem; font-weight:600">
+              Nutty/Cocoa</div>
+            <div class="pill-group group-colored group-nutty" style="margin-bottom:.7rem">
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Peanuts</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Hazelnut</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Almond</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Cocoa</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Dark Chocolate</span>
+            </div>
+            <div class="group-colored group-sweet"
+              style="font-size:.65rem; color:var(--p-c); letter-spacing:.05em; text-transform:uppercase; margin-bottom:-.1rem; font-weight:600">
+              Sweet</div>
+            <div class="pill-group group-colored group-sweet">
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Sweet Aromatics</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Overall Sweet</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Vanillin</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Vanilla</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Molasses</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Maple Syrup</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Caramelized</span>
+              <span class="pill-opt multi" onclick="this.classList.toggle('selected')">Honey</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="field"><label class="form-label">Notes</label>
+            <textarea id="j-notes" placeholder="Observations, what worked, what to tweak…"
+              style="height:64px"></textarea>
+          </div>
+        </div>
+        <input type="hidden" id="j-edit-id" value="">
+        <div style="display:flex;gap:.5rem;margin-top:.5rem">
+          <button class="btn-primary" onclick="saveJournalEntry()">Save Session</button>
+          <button class="btn-ghost" onclick="closeJModal()" style="margin-left:0">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── BOTTOM NAV ─────────────────────────────────────── -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-log" onclick="showPage('log')">
+      <span class="nav-icon">📋</span><span class="nav-label">Log</span>
+    </button>
+    <button class="nav-btn" id="nav-shelf" onclick="showPage('shelf')">
+      <span class="nav-icon">🫙</span><span class="nav-label">Shelf</span>
+    </button>
+    <button class="nav-btn" id="nav-process" onclick="showPage('process')">
+      <span class="nav-icon">🌿</span><span class="nav-label">Process</span>
+    </button>
+    <button class="nav-btn" id="nav-explore" onclick="showPage('explore')">
+      <span class="nav-icon">🌍</span><span class="nav-label">Explore</span>
+    </button>
+    <button class="nav-btn" id="nav-journal" onclick="showPage('journal')">
+      <span class="nav-icon">📓</span><span class="nav-label">Journal</span>
+    </button>
+    <button class="nav-btn" id="nav-insights" onclick="showPage('insights')">
+      <span class="nav-icon">📊</span><span class="nav-label">Insights</span>
+    </button>
+    <button class="nav-btn" id="nav-add" onclick="showPage('add')">
+      <span class="nav-icon">＋</span><span class="nav-label">Add</span>
+    </button>
+  </nav>
+
+  <script>
+    /* ═══════════════════════════════════════════════════════════
+       CONSTANTS & STATE
+    ═══════════════════════════════════════════════════════════ */
+    const API = '/api/logs';
+    const ICB_API = 'https://www.indiancoffeebeans.com/api/search-index';
+    
+    const $ = id => document.getElementById(id);
+    const esc = str => String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    const fmt = v => '₹' + Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    const fmtDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+
+    let userToken = localStorage.getItem('google_token');
+    let userData = JSON.parse(localStorage.getItem('user_data') || 'null');
+    let exploreData = [];
+
+    // Centralized Auth Fetch
+    async function authFetch(url, options = {}) {
+      if (!userToken) {
+        console.warn('No user token found. Request may fail.');
+      }
+      const headers = { 
+        ...options.headers, 
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      };
+      const resp = await fetch(url, { ...options, headers });
+      if (resp.status === 401) {
+        logout();
+        return null;
+      }
+      return resp;
+    }
+
+    // Google Auth Callback
+    function handleCredentialResponse(response) {
+      userToken = response.credential;
+      localStorage.setItem('google_token', userToken);
+      
+      // Decode JWT for profile info
+      const base64Url = userToken.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      
+      userData = {
+        name: payload.name,
+        email: payload.email,
+        picture: payload.picture
+      };
+      localStorage.setItem('user_data', JSON.stringify(userData));
+      
+      updateUserUI();
+      loadData();
+    }
+
+    function logout() {
+      userToken = null;
+      userData = null;
+      localStorage.removeItem('google_token');
+      localStorage.removeItem('user_data');
+      updateUserUI();
+      
+      // Clear data
+      logs = []; orders = []; journal = []; bagMeta = {};
+      renderAll();
+    }
+
+    function updateUserUI() {
+      const profileEl = $('user-profile');
+      if (userData) {
+        profileEl.innerHTML = `
+          <img src="${userData.picture}" class="user-avatar" title="${userData.name}">
+          <button class="btn-rm" onclick="logout()" title="Logout" style="font-size: 1.2rem">⎋</button>
+        `;
+      } else {
+        profileEl.innerHTML = `
+          <div id="g_id_onload"
+            data-client_id="948876617439-3ht5ofkikeq6iunotqlrmprac34sccmd.apps.googleusercontent.com"
+            data-callback="handleCredentialResponse"
+            data-auto_prompt="false">
+          </div>
+          <div class="g_id_signin" data-type="icon" data-shape="circle" data-theme="outline" data-text="signin_with" data-size="large"></div>
+        `;
+        // Re-init Google button if it was cleared
+        if (window.google) window.google.accounts.id.renderButton(
+          document.querySelector(".g_id_signin"),
+          { type: "icon", shape: "circle", theme: "outline", size: "large" }
+        );
+      }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       EXPLORE: ICB DIRECTORY
+    ═══════════════════════════════════════════════════════════ */
+    async function fetchExplore() {
+      if (exploreData.length) return;
+      try {
+        const res = await fetch(ICB_API);
+        exploreData = await res.json();
+        renderExplore();
+      } catch (e) {
+        console.error('Explore fetch failed', e);
+        $('exploreList').innerHTML = '<p>Failed to load bean directory.</p>';
+      }
+    }
+
+    function renderExplore(filterTxt = '') {
+      const list = $('exploreList');
+      const query = filterTxt.toLowerCase();
+      
+      const filtered = exploreData.filter(b => 
+        b.title?.toLowerCase().includes(query) || 
+        b.roasterName?.toLowerCase().includes(query) ||
+        b.description?.toLowerCase().includes(query)
+      ).slice(0, 50); // Limit to 50 for performance
+
+      list.innerHTML = filtered.map(b => `
+        <div class="explore-card">
+          <div class="explore-roaster">${esc(b.roasterName)}</div>
+          <div class="explore-name">${esc(b.title)}</div>
+          <div class="explore-price">${fmt(b.price)}</div>
+          <div class="explore-meta">
+            ${b.roastLevel ? `<span class="epill">${esc(b.roastLevel)}</span>` : ''}
+            ${b.process ? `<span class="epill">${esc(b.process)}</span>` : ''}
+          </div>
+          <button class="btn-add-item" style="margin-top:auto" onclick="quickAdd('${esc(b.roasterName)}', '${esc(b.title)}', ${b.price}, '${esc(b.process)}', '${esc(b.roastLevel)}')">
+            ＋ Quick Add
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function filterExplore() {
+      renderExplore($('exploreSearch').value);
+    }
+
+    function quickAdd(roaster, name, price, process, roast) {
+      showPage('add');
+      resetForm();
+      const row = document.querySelector('.item-row');
+      row.querySelector('[data-f="category"]').value = 'beans';
+      row.querySelector('[data-f="name"]').value = name;
+      row.querySelector('[data-f="roaster"]').value = roaster;
+      row.querySelector('[data-f="price"]').value = price;
+      // Map process/roast if possible
+      row.querySelector('[data-f="process"]').value = process;
+      row.querySelector('[data-f="roast_level"]').value = roast;
+      $('inp-vendor').value = roaster;
+    }
+
+    const TYPEMETA = {
+      'single-estate': { label: 'Single Estate', cls: '' },
+      'blend': { label: 'Blend', cls: '' },
+      'micro-lot': { label: 'Micro Lot', cls: '' },
+      'nano-lot': { label: 'Nano Lot', cls: '' }
+    };
+    const BREW_OPTS = ['French Press', 'Cafflano Kompresso', 'Moka Pot', 'V60', 'AeroPress', 'Espresso Machine', 'Cold Brew', 'Siphon'];
+    const SIZE_OPTS = ['100g', '200g', '250g', '500g', '1kg'];
+
+    const PROCESS_MAP = [
+      { key: 'natural', label: 'Natural', icon: '🍒', hint: 'sun-dried, dry process' },
+      { key: 'washed', label: 'Washed', icon: '💧', hint: 'wet process, fully washed' },
+      { key: 'honey', label: 'Honey', icon: '🍯', hint: 'pulped natural, honey process' },
+      { key: 'anaerobic', label: 'Anaerobic', icon: '⚗️', hint: 'fermentation, carbonic maceration' },
+      { key: 'wet-hulled', label: 'Wet Hulled', icon: '🌾', hint: 'giling basah' },
+    ];
+
+    let logs = [], orders = [];
+    let currentFilter = 'all';
+    let editingId = null;
+    let itemCount = 0;
+
+    let finishedBags = [];
+    let bagMeta = {};
+    let journal = [];
+    let jRating = 0;
+    let jEditId = null;
+
+    let pieInst, barInst, lineInst;
+
+    /* ═══════════════════════════════════════════════════════════
+       NAVIGATION
+    ═══════════════════════════════════════════════════════════ */
+    function showPage(name) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      $('page-' + name).classList.add('active');
+      $('nav-' + name).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      if (name === 'shelf') renderShelf();
+      if (name === 'process') renderProcess();
+      if (name === 'journal') renderJournal();
+      if (name === 'insights') renderInsights();
+      if (name === 'explore') fetchExplore();
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       LOAD DATA FROM API
+    ═══════════════════════════════════════════════════════════ */
+    async function loadData() {
+      if (!userToken) return;
+
+      try {
+        const res = await authFetch(API);
+        if (!res) return;
+        const data = await res.json();
+        logs = data.logs || [];
+        orders = data.orders || [];
+      } catch (e) {
+        console.error('Logs fetch error:', e);
+      }
+
+      try {
+        const res = await authFetch(API + '?route=journal');
+        if (!res) return;
+        const data = await res.json();
+        journal = (data.journal || []).map(j => ({
+          ...j,
+          beanId: j.beanId || j.bean_id,
+          beanLabel: j.beanLabel || j.bean_label,
+          tastes: typeof j.tastes === 'string' ? JSON.parse(j.tastes || '[]') : (j.tastes || []),
+        }));
+      } catch (e) {
+        console.error('Journal fetch error:', e);
+      }
+
+      try {
+        const res = await authFetch(API + '?route=shelf');
+        if (!res) return;
+        const data = await res.json();
+        bagMeta = {};
+        (data.shelf || []).forEach(s => {
+          const id = s.log_id;
+          bagMeta[id] = {
+            roastDate: s.roast_date || '',
+            deliveredDate: s.delivered_date || '',
+            openedDate: s.opened_date || '',
+            finishedDate: s.finished_date || '',
+            isFinished: !!s.is_finished,
+            gramEntries: typeof s.gram_entries === 'string'
+              ? JSON.parse(s.gram_entries || '[]')
+              : (s.gram_entries || []),
+          };
+        });
+        finishedBags = Object.entries(bagMeta)
+          .filter(([, m]) => m.isFinished)
+          .map(([id]) => Number(id));
+      } catch (e) {
+        console.error('Shelf fetch error:', e);
+      }
+
+      renderAll();
+    }
+
+    async function _syncShelf(id) {
+      const m = bagMeta[id] || {};
+      await authFetch(API + '?route=shelf', {
+        method: 'POST',
+        body: JSON.stringify({
+          log_id: id,
+          roastDate: m.roastDate || '',
+          deliveredDate: m.deliveredDate || '',
+          openedDate: m.openedDate || '',
+          finishedDate: m.finishedDate || '',
+          isFinished: !!m.isFinished,
+          gramEntries: m.gramEntries || [],
+        }),
+      });
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ITEM ROW BUILDER
+    ═══════════════════════════════════════════════════════════ */
+    function addItemRow(prefill = {}) {
+      itemCount++;
+      const n = itemCount;
+      const isCombo = $('inp-combo').checked;
+      let existingBrew = [];
+      try { existingBrew = JSON.parse(prefill.brew_equip || '[]'); } catch {
+        existingBrew = typeof prefill.brew_equip === 'string' ? prefill.brew_equip.split(',').filter(Boolean) : [];
+      }
+      const sizeInOpts = SIZE_OPTS.includes(prefill.size);
+      const div = document.createElement('div');
+      div.className = 'item-row'; div.id = `item-${n}`;
+      div.innerHTML = `
+    <div class="item-row-head">
+      <span class="item-num">Item ${n}</span>
+      <button class="btn-rm" onclick="removeItem(${n})">✕</button>
+    </div>
+    <div class="form-row full"><div class="field">
+      <label class="form-label">Product Name</label>
+      <input type="text" id="item-name-${n}" value="${esc(prefill.name || '')}" placeholder="e.g. Baarbara Washed AA">
+    </div></div>
+    <div class="form-row">
+      <div class="field">
+        <label class="form-label">Category</label>
+        <select id="item-cat-${n}" onchange="toggleBeansFields(${n})">
+          <option value="beans" ${(prefill.category || 'beans') === 'beans' ? 'selected' : ''}>Beans</option>
+          <option value="gears" ${prefill.category === 'gears' ? 'selected' : ''}>Gears</option>
+          <option value="accessories" ${prefill.category === 'accessories' ? 'selected' : ''}>Accessories</option>
+        </select>
+      </div>
+      <div class="field" id="item-price-wrap-${n}" style="${isCombo ? 'display:none' : ''}">
+        <label class="form-label">Price (₹)</label>
+        <input type="number" id="item-price-${n}" value="${prefill.price || ''}" placeholder="0" step="0.01">
+      </div>
+    </div>
+    <div class="beans-only" id="beans-fields-${n}">
+      <div class="form-row three">
+        <div class="field">
+          <label class="form-label">Roaster</label>
+          <input type="text" id="item-roaster-${n}" value="${esc(prefill.roaster || '')}" placeholder="e.g. Blue Tokai">
+        </div>
+        <div class="field">
+          <label class="form-label">Bag Size</label>
+          <select id="item-size-${n}" onchange="toggleCustomSize(${n})">
+            <option value="">Select</option>
+            ${SIZE_OPTS.map(s => `<option value="${s}" ${prefill.size === s ? 'selected' : ''}>${s}</option>`).join('')}
+            <option value="custom" ${prefill.size && !sizeInOpts ? 'selected' : ''}>Custom</option>
+          </select>
+        </div>
+        <div class="field" id="cswrap-${n}" style="display:${prefill.size && !sizeInOpts ? 'block' : 'none'}">
+          <label class="form-label">Custom Size</label>
+          <input type="text" id="item-size-custom-${n}" value="${prefill.size && !sizeInOpts ? esc(prefill.size) : ''}">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:.65rem">
+        <label class="form-label">Coffee Type</label>
+        <div class="pill-group" id="type-pills-${n}">
+          ${['single-estate', 'blend', 'micro-lot', 'nano-lot'].map(v => `<span class="pill-opt ${prefill.coffee_type === v ? 'selected' : ''}" data-val="${v}" onclick="selectPill(this,'type-pills-${n}')">${TYPEMETA[v].label}</span>`).join('')}
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:.65rem">
+        <label class="form-label">Process</label>
+        <div class="pill-group" id="process-pills-${n}">
+          ${['Natural', 'Washed', 'Honey', 'Anaerobic', 'Wet Hulled', 'Unknown'].map(v => `<span class="pill-opt ${(prefill.process || '') === (v) ? 'selected' : ''}" data-val="${v}" onclick="selectPill(this,'process-pills-${n}');toggleCustomProcess(${n})">${v}</span>`).join('')}
+          <span class="pill-opt ${!['Natural', 'Washed', 'Honey', 'Anaerobic', 'Wet Hulled', 'Unknown', ''].includes(prefill.process || '') ? 'selected' : ''}" data-val="__custom__" onclick="selectPill(this,'process-pills-${n}');toggleCustomProcess(${n})">Custom…</span>
+        </div>
+        <div id="custom-process-wrap-${n}" style="margin-top:.45rem;display:${!['Natural', 'Washed', 'Honey', 'Anaerobic', 'Wet Hulled', 'Unknown', ''].includes(prefill.process || '') ? 'block' : 'none'}">
+          <input type="text" id="custom-process-${n}" placeholder="e.g. Carbonic Maceration, Extended Ferment…" value="${esc(!['Natural', 'Washed', 'Honey', 'Anaerobic', 'Wet Hulled', 'Unknown', ''].includes(prefill.process || '') ? prefill.process || '' : '')}">
+        </div>
+      </div>
+
+    </div>
+    <div class="field">
+      <label class="form-label">Notes</label>
+      <textarea id="item-notes-${n}" placeholder="Origin, tasting notes, process details…">${esc(prefill.notes || '')}</textarea>
+    </div>`;
+      $('itemsList').appendChild(div);
+      toggleBeansFields(n);
+      return n;
+    }
+
+    function removeItem(n) {
+      const el = $(`item-${n}`);
+      if (el) el.remove();
+      if ($('itemsList').children.length === 0) addItemRow();
+    }
+    function toggleBeansFields(n) {
+      const cat = $(`item-cat-${n}`)?.value;
+      $(`beans-fields-${n}`)?.classList.toggle('hidden', cat !== 'beans');
+    }
+    function toggleCustomSize(n) {
+      if ($(`cswrap-${n}`)) $(`cswrap-${n}`).style.display = $(`item-size-${n}`)?.value === 'custom' ? 'block' : 'none';
+    }
+    function toggleCombo() {
+      const isCombo = $('inp-combo').checked;
+      $('comboPriceWrap').classList.toggle('active', isCombo);
+      document.querySelectorAll('[id^="item-price-wrap-"]').forEach(el => el.style.display = isCombo ? 'none' : '');
+    }
+    function selectPill(el, gid) {
+      const already = el.classList.contains('selected');
+      document.querySelectorAll(`#${gid} .pill-opt:not(.multi)`).forEach(p => p.classList.remove('selected'));
+      if (!already) el.classList.add('selected');
+    }
+    function getPill(gid) { return document.querySelector(`#${gid} .pill-opt.selected`)?.dataset.val || ''; }
+    function getMulti(gid) { return [...document.querySelectorAll(`#${gid} .multi.selected`)].map(p => p.dataset.val); }
+    function toggleCustomProcess(n) {
+      const sel = getPill(`process-pills-${n}`);
+      const wrap = $(`custom-process-wrap-${n}`);
+      if (wrap) wrap.style.display = sel === '__custom__' ? 'block' : 'none';
+    }
+    function getItemData(n) {
+      const sizeRaw = $(`item-size-${n}`)?.value || '';
+      return {
+        category: $(`item-cat-${n}`)?.value || 'beans',
+        name: ($(`item-name-${n}`)?.value || '').trim(),
+        price: parseFloat($(`item-price-${n}`)?.value) || 0,
+        notes: ($(`item-notes-${n}`)?.value || '').trim(),
+        roaster: ($(`item-roaster-${n}`)?.value || '').trim(),
+        size: sizeRaw === 'custom' ? ($(`item-size-custom-${n}`)?.value || '').trim() : sizeRaw,
+        coffee_type: getPill(`type-pills-${n}`),
+        process: (() => {
+          const v = getPill(`process-pills-${n}`);
+          if (v === '__custom__') return ($(`custom-process-${n}`)?.value || '').trim() || '';
+          return v;
+        })(),
+        brew_equip: [],  // captured via journal entries instead
+        qty: 1
+      };
+    }
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    /* ═══════════════════════════════════════════════════════════
+       SAVE / EDIT / DELETE
+    ═══════════════════════════════════════════════════════════ */
+    async function saveOrder() {
+      const date = $('inp-date').value;
+      const vendor = $('inp-vendor').value.trim();
+      const orderId = $('inp-order').value.trim();
+      const isCombo = $('inp-combo').checked;
+      const comboPrice = parseFloat($('inp-combo-price').value) || 0;
+      if (!date || !vendor) { alert('Please fill in date and vendor.'); return; }
+      const itemEls = [...$('itemsList').children];
+      const items = [];
+      for (const el of itemEls) {
+        const n = el.id.replace('item-', '');
+        const d = getItemData(n);
+        if (!d.name) { alert('Every item needs a name.'); return; }
+        items.push({ ...d, brew_equip: JSON.stringify(d.brew_equip) });
+      }
+      if (!items.length) { alert('Add at least one item.'); return; }
+
+      if (editingId) {
+        const item = items[0];
+        try {
+          const res = await authFetch(API, {
+            method: 'PUT',
+            body: JSON.stringify({
+              id: editingId, order_id: orderId, date, vendor,
+              category: item.category, name: item.name, price: isCombo ? 0 : item.price,
+              notes: item.notes, roaster: item.roaster, size: item.size,
+              coffee_type: item.coffee_type, brew_equip: item.brew_equip, qty: 1,
+              process: item.process,
+              is_combo: isCombo, combo_price: comboPrice
+            })
+          });
+          if (res && res.ok) { await loadData(); resetForm(); showPage('log'); }
+          else if (res) alert('Save failed: ' + await res.text());
+        } catch (e) { alert('Error: ' + e.message); }
+      } else {
+        try {
+          const res = await authFetch(API, {
+            method: 'POST',
+            body: JSON.stringify({ order: { order_id: orderId, date, vendor, is_combo: isCombo, combo_price: comboPrice, notes: '' }, items })
+          });
+          if (res && res.ok) { await loadData(); resetForm(); showPage('log'); }
+          else if (res) alert('Save failed: ' + await res.text());
+        } catch (e) { alert('Error: ' + e.message); }
+      }
+    }
+
+    function resetForm() {
+      editingId = null; itemCount = 0;
+      $('addPageTitle').innerHTML = 'New <em>Order</em>';
+      $('editBanner').classList.remove('active');
+      $('inp-date').valueAsDate = new Date();
+      $('inp-order').value = ''; $('inp-vendor').value = '';
+      $('inp-combo').checked = false; $('inp-combo-price').value = '';
+      $('comboPriceWrap').classList.remove('active');
+      $('itemsList').innerHTML = ''; addItemRow();
+    }
+
+    async function editEntry(id) {
+      const entry = logs.find(l => l.id === id);
+      if (!entry) return;
+      editingId = id;
+      $('addPageTitle').innerHTML = 'Edit <em>Entry</em>';
+      $('editBanner').textContent = `Editing "${entry.name}". Update and save.`;
+      $('editBanner').classList.add('active');
+      $('inp-date').value = entry.date; $('inp-order').value = entry.order_id || '';
+      $('inp-vendor').value = entry.vendor;
+      const isCombo = entry.is_combo === 1;
+      $('inp-combo').checked = isCombo; $('inp-combo-price').value = entry.combo_price || '';
+      $('comboPriceWrap').classList.toggle('active', isCombo);
+      $('itemsList').innerHTML = ''; itemCount = 0;
+      addItemRow(entry);
+      showPage('add');
+    }
+
+    async function deleteEntry(id) {
+      if (!confirm('Remove this entry?')) return;
+      try {
+        const res = await authFetch(API, { method: 'DELETE', body: JSON.stringify({ id }) });
+        if (res && res.ok) { if (editingId === id) resetForm(); await loadData(); }
+      } catch (e) { alert('Delete failed: ' + e.message); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       RENDER: LOG
+    ═══════════════════════════════════════════════════════════ */
+    function renderStats() {
+      const beans = logs.filter(l => l.category === 'beans').reduce((s, l) => s + Number(l.price || 0), 0);
+      const gears = logs.filter(l => l.category === 'gears').reduce((s, l) => s + Number(l.price || 0), 0);
+      const acc = logs.filter(l => l.category === 'accessories').reduce((s, l) => s + Number(l.price || 0), 0);
+      const total = beans + gears + acc;
+      $('grandTotal').textContent = fmt(total);
+      $('statBeans').textContent = fmt(beans);
+      $('statGears').textContent = fmt(gears);
+      $('statAcc').textContent = fmt(acc);
+      $('statCount').textContent = logs.length;
+    }
+
+    function renderEntries() {
+      let list = currentFilter === 'all' ? logs : logs.filter(l => l.category === currentFilter);
+      list = [...list].sort((a, b) => new Date(b.date) - new Date(a.date));
+      if (!list.length) { $('entriesList').innerHTML = '<div class="empty-state"><div class="icon">☕</div><p>No entries yet.</p></div>'; return; }
+
+      const groups = {};
+      list.forEach(l => {
+        const k = (l.order_id || '').trim() || `solo-${l.id}`;
+        (groups[k] = groups[k] || []).push(l);
+      });
+      const keys = Object.keys(groups).sort((a, b) => new Date(groups[b][0]?.date) - new Date(groups[a][0]?.date));
+
+      let html = '';
+      keys.forEach(k => {
+        const g = groups[k];
+        const isSolo = k.startsWith('solo-');
+        const orderObj = orders.find(o => o.order_id === k);
+        const isCombo = orderObj?.is_combo === 1;
+        const comboPrice = orderObj?.combo_price || 0;
+        const groupTotal = isCombo ? comboPrice : g.reduce((s, l) => s + Number(l.price || 0), 0);
+
+        if (isSolo) {
+          const l = g[0];
+          html += renderEntryCard(l, false, 'solo-card type-' + l.category);
+        } else {
+          html += `<div class="order-group">
+        <div class="order-group-header">
+          <div class="og-left">
+            <span class="og-id">#${k}</span>
+            ${isCombo ? '<span class="combo-badge">Combo</span>' : ''}
+            <span class="og-meta">${g[0]?.vendor || ''} · ${fmtDate(g[0]?.date)}</span>
+          </div>
+          <div class="og-actions">
+            <span class="og-total">${fmt(groupTotal)}</span>
+          </div>
+        </div>`;
+          g.forEach(l => { html += renderEntryCard(l, isCombo, 'entry-card type-' + l.category); });
+          html += '</div>';
+        }
+      });
+      $('entriesList').innerHTML = html;
+    }
+
+    function renderEntryCard(l, isCombo, cls) {
+      const tag = l.category === 'beans' ? 'tag-beans' : l.category === 'gears' ? 'tag-gears' : 'tag-accessories';
+      const lbl = l.category === 'beans' ? 'Beans' : l.category === 'gears' ? 'Gears' : 'Accessories';
+      const pills = [];
+      if (l.roaster && l.category === 'beans') pills.push(`<span class="epill">${esc(l.roaster)}</span>`);
+      if (l.size) pills.push(`<span class="epill">${esc(l.size)}</span>`);
+      if (l.coffee_type && TYPEMETA[l.coffee_type]) pills.push(`<span class="epill">${TYPEMETA[l.coffee_type].label}</span>`);
+      const proc = detectProcess(l);
+      if (proc) pills.push(`<span class="epill process">${proc.icon} ${proc.label}</span>`);
+      getBrew(l).forEach(b => pills.push(`<span class="epill brew">☕ ${esc(b)}</span>`));
+      const priceHtml = isCombo ? `<span class="entry-price combo-part">combo</span>` : `<span class="entry-price">${fmt(l.price)}</span>`;
+      return `<div class="${cls}">
+    <div class="entry-left">
+      <div class="entry-name">${esc(l.name)}</div>
+      <div class="entry-meta">
+        <span class="entry-vendor">${esc(l.vendor)}</span>
+        <span class="entry-date">${fmtDate(l.date)}</span>
+        <span class="entry-tag ${tag}">${lbl}</span>
+      </div>
+      ${pills.length ? `<div class="entry-pills">${pills.join('')}</div>` : ''}
+      ${l.notes ? `<div class="entry-notes">${esc(l.notes)}</div>` : ''}
+    </div>
+    <div class="entry-right">
+      ${priceHtml}
+      <div style="display:flex;gap:.3rem">
+        <button class="action-btn" onclick="editEntry(${l.id})">Edit</button>
+        <button class="action-btn del" onclick="deleteEntry(${l.id})">✕</button>
+      </div>
+    </div>
+  </div>`;
+    }
+
+    function setFilter(f, btn) {
+      currentFilter = f;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderEntries();
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       RENDER: SHELF
+    ═══════════════════════════════════════════════════════════ */
+    function renderShelf() {
+      const beans = logs.filter(l => l.category === 'beans').sort((a, b) => new Date(b.date) - new Date(a.date));
+      const active = beans.filter(b => !finishedBags.includes(b.id));
+      const finished = beans.filter(b => finishedBags.includes(b.id));
+
+      $('shelfCount').textContent = active.length;
+      $('shelfActive').textContent = active.length;
+      $('shelfFinished').textContent = finished.length;
+      $('shelfFinishedLabel').style.display = finished.length ? '' : 'none';
+
+      const renderBag = (l, isDone) => {
+        const meta = bagMeta[l.id] || {};
+        const proc = detectProcess(l);
+        const brew = getBrew(l);
+        const pills = [];
+        if (l.roaster) pills.push(`<span class="epill">${esc(l.roaster)}</span>`);
+        if (l.size) pills.push(`<span class="epill">${esc(l.size)}</span>`);
+        if (l.coffee_type && TYPEMETA[l.coffee_type]) pills.push(`<span class="epill">${TYPEMETA[l.coffee_type].label}</span>`);
+        if (proc) pills.push(`<span class="epill process">${proc.icon} ${proc.label}</span>`);
+        brew.forEach(b => pills.push(`<span class="epill brew">☕ ${esc(b)}</span>`));
+
+        // Lifecycle date pills
+        const lifePills = [];
+        if (meta.roastDate) lifePills.push(`<span class="epill" style="background:var(--green-bg);color:var(--green)">🌿 Roasted ${fmtDate(meta.roastDate)}</span>`);
+        if (meta.deliveredDate) lifePills.push(`<span class="epill">📦 ${fmtDate(meta.deliveredDate)}</span>`);
+        if (meta.openedDate) lifePills.push(`<span class="epill">🔓 ${fmtDate(meta.openedDate)}</span>`);
+        if (isDone && meta.finishedDate) lifePills.push(`<span class="epill" style="background:var(--green-bg);color:var(--green)">✅ ${fmtDate(meta.finishedDate)}</span>`);
+
+        // Gram usage bar
+        const entries = meta.gramEntries || [];
+        const totalUsed = entries.reduce((s, e) => s + Number(e.grams || 0), 0);
+        const bagSizeG = parseBagSize(l.size);
+        let gramBar = '';
+        if (!isDone && totalUsed > 0) {
+          if (bagSizeG) {
+            const pct = Math.min(100, Math.round(totalUsed / bagSizeG * 100));
+            gramBar = `<div class="freshness-bar-wrap">
+          <div class="freshness-label">${totalUsed}g brewed · ${bagSizeG - totalUsed > 0 ? (bagSizeG - totalUsed) + 'g left' : 'bag empty'}</div>
+          <div class="freshness-track"><div class="freshness-fill ${pct >= 100 ? 'fresh-red' : 'fresh-amber'}" style="width:${pct}%"></div></div>
+        </div>`;
+          } else {
+            gramBar = `<div class="freshness-bar-wrap"><div class="freshness-label">${totalUsed}g brewed total</div></div>`;
+          }
+        }
+
+        // Freshness bar — uses roast date if known, otherwise purchase date
+        let freshnessBar = '';
+        if (!isDone) {
+          const refDate = meta.roastDate || l.date;
+          const refLabel = meta.roastDate ? 'since roast' : 'since purchase';
+          const maxDays = meta.roastDate ? 60 : 45;
+          const daysSince = Math.floor((Date.now() - new Date(refDate + 'T00:00:00').getTime()) / 86400000);
+          const freshPct = Math.max(0, Math.min(100, 100 - Math.round(daysSince / maxDays * 100)));
+          const freshCls = freshPct > 60 ? 'fresh-green' : freshPct > 30 ? 'fresh-amber' : 'fresh-red';
+          const freshLabel = freshPct > 60 ? 'Fresh' : freshPct > 30 ? 'Prime' : 'Getting stale';
+          freshnessBar = `<div class="freshness-bar-wrap">
+        <div class="freshness-label">${freshLabel} · ${daysSince}d ${refLabel}</div>
+        <div class="freshness-track"><div class="freshness-fill ${freshCls}" style="width:${freshPct}%"></div></div>
+      </div>`;
+        }
+
+        return `<div class="shelf-card ${isDone ? 'finished' : ''}">
+      <div class="shelf-left">
+        <div class="shelf-name">${esc(l.name)}</div>
+        <div class="shelf-roaster">${esc(l.vendor)}${l.roaster && l.roaster !== l.vendor ? ' · ' + esc(l.roaster) : ''}</div>
+        ${pills.length ? `<div class="shelf-pills">${pills.join('')}</div>` : ''}
+        ${lifePills.length ? `<div class="shelf-pills" style="margin-top:.32rem">${lifePills.join('')}</div>` : ''}
+        ${freshnessBar}
+        ${gramBar}
+      </div>
+      <div class="shelf-right">
+
+        <span class="shelf-date">${fmtDate(l.date)}</span>
+        <button class="action-btn" onclick="openBagModal(${l.id})" style="font-size:.68rem;white-space:nowrap">📋 Track</button>
+        <button class="btn-finish ${isDone ? 'done' : ''}" onclick="toggleFinished(${l.id})">
+          ${isDone ? '↩ Reopen' : '✓ Finished'}
+        </button>
+      </div>
+    </div>`;
+      };
+
+      $('shelfActive-list').innerHTML = active.length
+        ? active.map(b => renderBag(b, false)).join('')
+        : '<div class="empty-state"><div class="icon">🫙</div><p>No beans on the shelf yet.</p></div>';
+
+      $('shelfFinished-list').innerHTML = finished.map(b => renderBag(b, true)).join('');
+    }
+
+    async function toggleFinished(id) {
+      if (!bagMeta[id]) bagMeta[id] = {};
+      if (finishedBags.includes(id)) {
+        finishedBags = finishedBags.filter(x => x !== id);
+        bagMeta[id].finishedDate = '';
+        bagMeta[id].isFinished = false;
+      } else {
+        finishedBags.push(id);
+        if (!bagMeta[id].finishedDate) {
+          bagMeta[id].finishedDate = new Date().toISOString().slice(0, 10);
+        }
+        bagMeta[id].isFinished = true;
+      }
+      await _syncShelf(id);
+      renderShelf();
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       BAG LIFECYCLE MODAL
+    ═══════════════════════════════════════════════════════════ */
+    function parseBagSize(size) {
+      if (!size) return null;
+      const m = String(size).match(/(\d+(?:\.\d+)?)\s*g/i);
+      if (m) return Number(m[1]);
+      const km = String(size).match(/(\d+(?:\.\d+)?)\s*kg/i);
+      if (km) return Number(km[1]) * 1000;
+      return null;
+    }
+
+    function openBagModal(id) {
+      const meta = bagMeta[id] || {};
+      const log = logs.find(l => l.id === id);
+      $('bagModalId').value = id;
+      $('bagModalTitle').innerHTML = log
+        ? `Track <em>${esc(log.name)}</em>`
+        : 'Track <em>Bag</em>';
+      $('bm-roastDate').value = meta.roastDate || '';
+      $('bm-deliveredDate').value = meta.deliveredDate || '';
+      $('bm-openedDate').value = meta.openedDate || '';
+      $('bm-finishedDate').value = meta.finishedDate || '';
+      if (!bagMeta[id]) bagMeta[id] = {};
+      if (!bagMeta[id].gramEntries) bagMeta[id].gramEntries = [];
+      renderGramEntries(id);
+      $('bagModalOverlay').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeBagModal(e) {
+      if (e && e.target !== $('bagModalOverlay')) return;
+      $('bagModalOverlay').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function _gramTotal(id) {
+      return (bagMeta[id]?.gramEntries || []).reduce((s, e) => s + Number(e.grams || 0), 0);
+    }
+
+    function _updateGramUI(id) {
+      const log = logs.find(l => l.id === id);
+      const bagSizeG = parseBagSize(log?.size);
+      const totalUsed = _gramTotal(id);
+      if (bagSizeG) {
+        const pct = Math.min(100, Math.round(totalUsed / bagSizeG * 100));
+        $('bm-gramFill').style.width = pct + '%';
+        $('bm-gramFill').className = 'gram-fill' + (totalUsed > bagSizeG ? ' over' : '');
+        $('bm-gramTrack').style.display = '';
+        const rem = bagSizeG - totalUsed;
+        $('bm-gramSummary').textContent = `${totalUsed}g used of ${bagSizeG}g · ${rem > 0 ? rem + 'g remaining' : 'bag empty'}`;
+      } else {
+        $('bm-gramTrack').style.display = 'none';
+        $('bm-gramSummary').textContent = totalUsed > 0 ? `${totalUsed}g used total` : '';
+      }
+    }
+
+    function renderGramEntries(id) {
+      _updateGramUI(id);
+      const entries = bagMeta[id]?.gramEntries || [];
+      $('bm-gramHeaders').style.display = entries.length ? 'grid' : 'none';
+      $('bm-gramList').innerHTML = entries.map((e, i) => `
+    <div class="gram-entry-row">
+      <input type="date" value="${e.date || ''}"
+        onchange="updateGramEntry(${i},'date',this.value)">
+      <input type="number" value="${e.grams || ''}" placeholder="g" min="0" step="0.1"
+        oninput="updateGramEntry(${i},'grams',this.value)">
+      <button class="btn-rm-gram" onclick="removeGramEntry(${i})">✕</button>
+    </div>`).join('');
+    }
+
+    function addGramEntry() {
+      const id = Number($('bagModalId').value);
+      if (!bagMeta[id]) bagMeta[id] = {};
+      if (!bagMeta[id].gramEntries) bagMeta[id].gramEntries = [];
+      bagMeta[id].gramEntries.push({ date: new Date().toISOString().slice(0, 10), grams: '' });
+      renderGramEntries(id);
+      _syncShelf(id);
+    }
+
+    function removeGramEntry(idx) {
+      const id = Number($('bagModalId').value);
+      if (!bagMeta[id]?.gramEntries) return;
+      bagMeta[id].gramEntries.splice(idx, 1);
+      renderGramEntries(id);
+      _syncShelf(id);
+    }
+
+    function updateGramEntry(idx, field, val) {
+      const id = Number($('bagModalId').value);
+      if (!bagMeta[id]?.gramEntries?.[idx] === undefined) return;
+      bagMeta[id].gramEntries[idx][field] = field === 'grams' ? Number(val) || '' : val;
+      _updateGramUI(id);
+      _syncShelf(id);
+    }
+
+    async function saveBagMeta() {
+      const id = Number($('bagModalId').value);
+      if (!bagMeta[id]) bagMeta[id] = {};
+      bagMeta[id].roastDate = $('bm-roastDate').value;
+      bagMeta[id].deliveredDate = $('bm-deliveredDate').value;
+      bagMeta[id].openedDate = $('bm-openedDate').value;
+      bagMeta[id].finishedDate = $('bm-finishedDate').value;
+      // Sync finished state
+      if (bagMeta[id].finishedDate) {
+        bagMeta[id].isFinished = true;
+        if (!finishedBags.includes(id)) finishedBags.push(id);
+      } else {
+        bagMeta[id].isFinished = false;
+        finishedBags = finishedBags.filter(x => x !== id);
+      }
+      // Persist to D1
+      await _syncShelf(id);
+      $('bagModalOverlay').classList.add('hidden');
+      document.body.style.overflow = '';
+      renderShelf();
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       RENDER: PROCESS
+    ═══════════════════════════════════════════════════════════ */
+    function detectProcess(l) {
+      if (l.category !== 'beans') return null;
+      // 1. Prefer the explicit process field
+      const explicit = (l.process || '').trim();
+      if (explicit) {
+        // See if it matches a canonical process
+        const match = PROCESS_MAP.find(p =>
+          p.key === explicit.toLowerCase() ||
+          p.label.toLowerCase() === explicit.toLowerCase()
+        );
+        if (match) return match;
+        // Otherwise it's a custom process — return a synthetic entry
+        return { key: '__custom__:' + explicit, label: explicit, icon: '✨', custom: true };
+      }
+      // 2. Fallback: keyword scan of name/notes
+      const haystack = [(l.name || ''), (l.notes || '')].join(' ').toLowerCase();
+      for (const p of PROCESS_MAP) {
+        if (haystack.includes(p.key)) return p;
+      }
+      return null;
+    }
+
+    function getBrew(l) {
+      try { return JSON.parse(l.brew_equip || '[]') || []; }
+      catch { return typeof l.brew_equip === 'string' ? l.brew_equip.split(',').filter(Boolean) : []; }
+    }
+
+    function renderProcess() {
+      const beans = logs.filter(l => l.category === 'beans');
+      const grouped = {};
+      PROCESS_MAP.forEach(p => { grouped[p.key] = []; });
+      grouped['unknown'] = [];
+      // custom keys will be added dynamically
+
+      beans.forEach(l => {
+        const p = detectProcess(l);
+        const key = p ? p.key : 'unknown';
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(l);
+      });
+
+      // Build ordered list: canonical processes first, then custom, then unknown
+      const customKeys = Object.keys(grouped).filter(k => k.startsWith('__custom__:'));
+      const processOrder = [...PROCESS_MAP.map(p => p.key), ...customKeys, 'unknown'];
+      let html = '';
+      processOrder.forEach(key => {
+        const list = grouped[key];
+        if (!list || !list.length) return;
+        let meta;
+        if (key.startsWith('__custom__:')) {
+          const label = key.replace('__custom__:', '');
+          meta = { label, icon: '✨', hint: 'custom process' };
+        } else {
+          meta = PROCESS_MAP.find(p => p.key === key) || { label: 'Untagged', icon: '❓', hint: 'process not identified' };
+        }
+        const total = list.reduce((s, l) => s + Number(l.price || 0), 0);
+        html += `<div class="process-group">
+      <div class="process-header">
+        <span class="process-icon">${meta.icon}</span>
+        <div class="process-title-wrap">
+          <div class="process-name">${meta.label}</div>
+          <div class="process-count">${list.length} bag${list.length !== 1 ? 's' : ''} · ${fmt(total)}</div>
+        </div>
+      </div>`;
+        list.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(l => {
+          const brew = getBrew(l);
+          html += `<div class="process-card">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.7rem">
+          <div>
+            <div class="process-card-name">${esc(l.name)}</div>
+            <div class="process-card-meta">
+              <span class="process-card-roaster">${esc(l.vendor)}${l.roaster && l.roaster !== l.vendor ? ' · ' + esc(l.roaster) : ''}</span>
+              <span class="process-card-date">${fmtDate(l.date)}</span>
+              ${l.size ? `<span class="epill">${esc(l.size)}</span>` : ''}
+              ${l.coffee_type && TYPEMETA[l.coffee_type] ? `<span class="epill">${TYPEMETA[l.coffee_type].label}</span>` : ''}
+            </div>
+            ${brew.length ? `<div class="entry-pills" style="margin-top:.38rem">${brew.map(b => `<span class="epill brew">☕ ${esc(b)}</span>`).join('')}</div>` : ''}
+            ${l.notes ? `<div class="entry-notes" style="margin-top:.28rem">${esc(l.notes)}</div>` : ''}
+          </div>
+
+        </div>
+      </div>`;
+        });
+        html += '</div>';
+      });
+
+      $('processList').innerHTML = html || '<div class="empty-state"><div class="icon">🌿</div><p>Log some beans to see them by process.</p></div>';
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       RENDER: JOURNAL
+    ═══════════════════════════════════════════════════════════ */
+    function renderJournal() {
+      // stats
+      const total = journal.length;
+      const rated = journal.filter(j => j.rating > 0);
+      const avgR = rated.length ? Math.round(rated.reduce((s, j) => s + j.rating, 0) / rated.length * 10) / 10 : null;
+      const brewCount = {};
+      journal.forEach(j => { if (j.brewer) brewCount[j.brewer] = (brewCount[j.brewer] || 0) + 1; });
+      const favBrew = Object.entries(brewCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '—';
+      $('jsTotal').textContent = total;
+      $('jsAvgRating').textContent = avgR ? avgR + '★' : '—';
+      $('jsFavMethod').textContent = favBrew.split(' ')[0]; // short label
+
+      if (!journal.length) {
+        $('journalList').innerHTML = '<div class="empty-state"><div class="icon">📓</div><p>Log your first brew session!</p></div>';
+        return;
+      }
+
+      const sorted = [...journal].sort((a, b) => new Date(b.date) - new Date(a.date));
+      $('journalList').innerHTML = sorted.map(j => {
+        const stars = '★'.repeat(j.rating || 0) + '☆'.repeat(5 - (j.rating || 0));
+        const tastes = (j.tastes || []).map(t => `<span class="taste-chip">${esc(t)}</span>`).join('');
+        const meta = [];
+        if (j.brewer) meta.push(`<span class="epill brew">☕ ${esc(j.brewer)}</span>`);
+        if (j.dose) meta.push(`<span class="epill">${j.dose}g dose</span>`);
+        if (j.yield) meta.push(`<span class="epill">${j.yield}ml</span>`);
+        if (j.time) meta.push(`<span class="epill">${j.time}min</span>`);
+        if (j.temp) meta.push(`<span class="epill">${j.temp}°C</span>`);
+        if (j.grinder) meta.push(`<span class="epill">⚙️ ${esc(j.grinder)}</span>`);
+        if (j.grind) meta.push(`<span class="epill">📏 ${esc(j.grind)}</span>`);
+        const beanName = j.beanId ? logs.find(l => l.id === parseInt(j.beanId))?.name || j.beanLabel || '' : j.beanLabel || '';
+        return `<div class="journal-entry">
+      <div class="je-header">
+        <div>
+          <div class="je-title">${beanName ? esc(beanName) : 'Brew Session'}</div>
+          <div style="font-size:.72rem;color:var(--caramel);margin-top:.1rem">${stars}</div>
+        </div>
+        <div class="je-date">${fmtDate(j.date)}</div>
+      </div>
+      ${meta.length ? `<div class="je-meta">${meta.join('')}</div>` : ''}
+      ${tastes ? `<div class="tasting-chips" style="margin-top:.4rem">${tastes}</div>` : ''}
+      ${j.notes ? `<div class="je-notes">${esc(j.notes)}</div>` : ''}
+      <div class="je-actions">
+        <button class="action-btn" onclick="openJournalModal(${j.id})">Edit</button>
+        <button class="action-btn del" onclick="deleteJournalEntry(${j.id})">✕</button>
+      </div>
+    </div>`;
+      }).join('');
+    }
+
+    function openJournalModal(editId) {
+      // populate bean select from logs — exclude finished bags
+      const beans = logs.filter(l => l.category === 'beans' && !finishedBags.includes(l.id)).sort((a, b) => new Date(b.date) - new Date(a.date));
+      $('j-bean').innerHTML = '<option value="">— Select a bean —</option>' +
+        beans.map(b => `<option value="${b.id}">${esc(b.name)} (${esc(b.roaster || b.vendor)})</option>`).join('');
+
+      if (editId) {
+        const j = journal.find(x => String(x.id) === String(editId));
+        if (!j) return;
+        jEditId = editId;
+        $('jModalTitle').textContent = 'Edit Session';
+        $('j-date').value = j.date || '';
+        $('j-brewer').value = j.brewer || '';
+        $('j-grinder').value = j.grinder || '';
+        $('j-bean').value = j.beanId || '';
+        $('j-dose').value = j.dose || '';
+        $('j-yield').value = j.yield || '';
+        $('j-time').value = j.time || '';
+        $('j-temp').value = j.temp || '';
+        $('j-grind').value = j.grind || '';
+        $('j-notes').value = j.notes || '';
+        setRating(j.rating || 0);
+        document.querySelectorAll('#tastePills .pill-opt').forEach(p => {
+          p.classList.toggle('selected', (j.tastes || []).includes(p.textContent));
+        });
+      } else {
+        jEditId = null; jRating = 0;
+        $('jModalTitle').textContent = 'New Brew Session';
+        $('j-date').valueAsDate = new Date();
+        $('j-brewer').value = ''; $('j-grinder').value = ''; $('j-bean').value = '';
+        ['j-dose', 'j-yield', 'j-time', 'j-temp', 'j-grind', 'j-notes'].forEach(id => $(id).value = '');
+        document.querySelectorAll('#jRatingStars .star').forEach(s => s.classList.remove('filled'));
+        document.querySelectorAll('#tastePills .pill-opt').forEach(p => p.classList.remove('selected'));
+      }
+      $('journalModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeJModal() {
+      $('journalModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    function maybeCloseJModal(e) { if (e.target === $('journalModal')) closeJModal(); }
+
+    function setRating(v) {
+      jRating = v;
+      document.querySelectorAll('#jRatingStars .star').forEach(s => {
+        s.classList.toggle('filled', parseInt(s.dataset.v) <= v);
+      });
+    }
+
+    async function saveJournalEntry() {
+      const date = $('j-date').value;
+      const brewer = $('j-brewer').value;
+      const grinder = $('j-grinder').value;
+      const beanId = $('j-bean').value;
+      const beanLabel = beanId ? $('j-bean').options[$('j-bean').selectedIndex].text : '';
+      const dose = parseFloat($('j-dose').value) || 0;
+      const yld = parseFloat($('j-yield').value) || 0;
+      const time = parseFloat($('j-time').value) || 0;
+      const temp = parseFloat($('j-temp').value) || 0;
+      const grind = $('j-grind').value.trim();
+      const notes = $('j-notes').value.trim();
+      const tastes = [...document.querySelectorAll('#tastePills .multi.selected')].map(p => p.textContent);
+
+      const entry = {
+        id: jEditId || Date.now(),
+        date, brewer, grinder, beanId, beanLabel, dose, yield: yld, time, temp, grind, notes,
+        rating: jRating, tastes
+      };
+
+      // Sync to D1
+      if (jEditId) {
+        await fetch(API + '?route=journal', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
+        });
+      } else {
+        await fetch(API + '?route=journal', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
+        });
+      }
+      // Reload from D1 so all devices stay in sync
+      const jr = await fetch(API + '?route=journal');
+      const jd = await jr.json();
+      journal = (jd.journal || []).map(j => ({
+        ...j,
+        beanId: j.beanId || j.bean_id,
+        beanLabel: j.beanLabel || j.bean_label,
+        tastes: typeof j.tastes === 'string' ? JSON.parse(j.tastes || '[]') : (j.tastes || []),
+      }));
+      closeJModal();
+      renderJournal();
+    }
+
+    async function deleteJournalEntry(id) {
+      if (!confirm('Delete this session?')) return;
+      await fetch(API, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'deleteJournal', id })
+      });
+      journal = journal.filter(j => String(j.id) !== String(id));
+      renderJournal();
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       RENDER: INSIGHTS
+    ═══════════════════════════════════════════════════════════ */
+    function renderInsights() {
+      const beans = logs.filter(l => l.category === 'beans');
+      const gears = logs.filter(l => l.category === 'gears');
+      const acc = logs.filter(l => l.category === 'accessories');
+      const bTotal = beans.reduce((s, l) => s + Number(l.price || 0), 0);
+      const gTotal = gears.reduce((s, l) => s + Number(l.price || 0), 0);
+      const aTotal = acc.reduce((s, l) => s + Number(l.price || 0), 0);
+      const total = bTotal + gTotal + aTotal;
+
+      // Vendor totals
+      const vendorTot = {};
+      logs.forEach(l => { vendorTot[l.vendor] = (vendorTot[l.vendor] || 0) + Number(l.price || 0); });
+      const topVendors = Object.entries(vendorTot).sort((a, b) => b[1] - a[1]);
+      const topVendor = topVendors[0]?.[0] || '—';
+
+      // Roasters (unique)
+      const roasters = new Set(beans.map(l => l.roaster).filter(Boolean));
+
+      // Cost per gram
+      const bagsWithSize = beans.filter(l => l.size && l.price);
+      const cpg = bagsWithSize.length ? (() => {
+        const totalG = bagsWithSize.reduce((s, l) => {
+          const g = parseFloat(l.size) || 0;
+          return s + g;
+        }, 0);
+        const totalP = bagsWithSize.reduce((s, l) => s + Number(l.price || 0), 0);
+        return totalG > 0 ? Math.round(totalP / totalG * 100) : 0;
+      })() : 0;
+
+      // Price per cup — from journal: average dose per session, cost per gram from beans
+      let pricPerCup = 0;
+      if (journal.length > 0 && beans.length > 0) {
+        const sessionsWithDose = journal.filter(j => j.dose > 0);
+        const avgDoseG = sessionsWithDose.length
+          ? sessionsWithDose.reduce((s, j) => s + Number(j.dose || 0), 0) / sessionsWithDose.length
+          : 0;
+        // Cost per gram: total beans spend / total grams purchased
+        const beansWithSize = beans.filter(l => l.size && l.price);
+        const totalGrams = beansWithSize.reduce((s, l) => {
+          const m = String(l.size).match(/(\d+(?:\.\d+)?)\s*g/i);
+          const km = String(l.size).match(/(\d+(?:\.\d+)?)\s*kg/i);
+          return s + (m ? Number(m[1]) : km ? Number(km[1]) * 1000 : 0);
+        }, 0);
+        const totalBeansSpend = beansWithSize.reduce((s, l) => s + Number(l.price || 0), 0);
+        const costPerGram = totalGrams > 0 ? totalBeansSpend / totalGrams : 0;
+        pricPerCup = avgDoseG > 0 && costPerGram > 0 ? costPerGram * avgDoseG : 0;
+      }
+
+      // Fill stat bar
+      $('ins-total-h').textContent = fmt(total);
+      $('ins-orders').textContent = orders.length;
+      $('ins-avg').textContent = fmt(total / (orders.length || 1));
+      $('ins-beans-pct').textContent = total > 0 ? Math.round(bTotal / total * 100) + '%' : '0%';
+      $('ins-top-vendor').textContent = topVendor.split(' ')[0];
+      $('ins-roasters').textContent = roasters.size;
+      $('ins-cpg').textContent = cpg ? fmt(cpg) : '—';
+      $('ins-ppc').textContent = pricPerCup > 0 ? '₹' + pricPerCup.toFixed(1) : '—';
+
+      // Total kg of beans bought (parsed from size field across all bean entries)
+      const totalKgBought = beans.reduce((s, l) => {
+        const sz = String(l.size || '');
+        const kg = sz.match(/(\d+(?:\.\d+)?)\s*kg/i);
+        const g = sz.match(/(\d+(?:\.\d+)?)\s*g/i);
+        return s + (kg ? Number(kg[1]) : g ? Number(g[1]) / 1000 : 0);
+      }, 0);
+      $('ins-total-kg').textContent = totalKgBought > 0 ? totalKgBought.toFixed(2) + ' kg' : '—';
+
+      // Callouts
+      const callouts = [];
+      if (bTotal > gTotal + aTotal) callouts.push({ icon: '☕', text: `You spend <strong>${Math.round(bTotal / total * 100)}%</strong> of your budget on beans — a true coffee purist.` });
+      else callouts.push({ icon: '⚙️', text: `You've invested more in gear than beans so far. Once the setup's sorted, let the beans shine.` });
+      if (topVendors[0]) callouts.push({ icon: '🏆', text: `<strong>${topVendors[0][0]}</strong> is your most-spent vendor at ${fmt(topVendors[0][1])}.` });
+      if (cpg) callouts.push({ icon: '📊', text: `Your average cost is <strong>${fmt(cpg)}/100g</strong> across bags with known sizes.` });
+      if (pricPerCup > 0) callouts.push({ icon: '☕', text: `Based on your journal, each cup costs you roughly <strong>₹${pricPerCup.toFixed(1)}</strong> in beans.` });
+      $('insCallouts').innerHTML = callouts.map(c => `<div class="insight-callout"><span class="callout-icon">${c.icon}</span><div class="callout-text">${c.text}</div></div>`).join('');
+
+      // Monthly
+      const monthly = {}, monthlyB = {}, monthlyG = {}, monthlyA = {};
+      logs.forEach(l => {
+        const ym = (l.date || '').slice(0, 7); if (!ym) return;
+        const p = Number(l.price || 0);
+        monthly[ym] = (monthly[ym] || 0) + p;
+        if (l.category === 'beans') monthlyB[ym] = (monthlyB[ym] || 0) + p;
+        if (l.category === 'gears') monthlyG[ym] = (monthlyG[ym] || 0) + p;
+        if (l.category === 'accessories') monthlyA[ym] = (monthlyA[ym] || 0) + p;
+      });
+      const sortedM = Object.keys(monthly).sort();
+      const mlabels = sortedM.map(m => { const [y, mo] = m.split('-'); return new Date(+y, +mo - 1).toLocaleString('en-IN', { month: 'short', year: '2-digit' }); });
+
+      const C = {
+        cream: '#F5EFE0', caramel: '#C47D2A', mid: '#7A5C3A', blue: '#4A6FA5',
+        green: '#5E8A3A', parchment: '#EDE4CE', light: '#D4B483', honey: '#E8A83E', purple: '#7A3A8A'
+      };
+
+      const isDark = document.body.classList.contains('dark-mode');
+      const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : C.parchment;
+      const textColor = isDark ? '#A68A64' : C.mid;
+
+      // Bar chart (monthly total)
+      if (barInst) barInst.destroy();
+      barInst = new Chart($('barChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: mlabels, datasets: [{ label: 'Beans', data: sortedM.map(m => monthlyB[m] || 0), backgroundColor: C.caramel + 'AA', borderColor: C.caramel, borderWidth: 2, borderRadius: 6, stack: 's' },
+          { label: 'Gears', data: sortedM.map(m => monthlyG[m] || 0), backgroundColor: C.mid + '99', borderColor: C.mid, borderWidth: 2, borderRadius: 0, stack: 's' },
+          { label: 'Accessories', data: sortedM.map(m => monthlyA[m] || 0), backgroundColor: C.blue + '88', borderColor: C.blue, borderWidth: 2, borderRadius: 0, stack: 's' }]
+        },
+        options: {
+          plugins: { legend: { labels: { color: textColor, font: { size: 11, family: 'DM Sans' } } } },
+          scales: {
+            x: { stacked: true, ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } },
+            y: { stacked: true, ticks: { color: textColor, font: { size: 10 }, callback: v => `₹${v.toLocaleString('en-IN')}` }, grid: { color: gridColor } }
+          }
+        }
+      });
+
+      // Pie
+      if (pieInst) pieInst.destroy();
+      pieInst = new Chart($('pieChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Beans', 'Gears', 'Accessories'], datasets: [{
+            data: [bTotal, gTotal, aTotal],
+            backgroundColor: [C.caramel, C.mid, C.blue], borderColor: isDark ? '#1A1208' : C.cream, borderWidth: 3
+          }]
+        },
+        options: { plugins: { legend: { labels: { color: textColor, font: { size: 11, family: 'DM Sans' } } } }, cutout: '60%' }
+      });
+
+      // Line over time
+      if (lineInst) lineInst.destroy();
+      lineInst = new Chart($('lineChart').getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: mlabels, datasets: [
+            { label: 'Beans', data: sortedM.map(m => monthlyB[m] || 0), borderColor: C.caramel, backgroundColor: C.caramel + '22', tension: .3, fill: true, pointRadius: 3 },
+            { label: 'Gears', data: sortedM.map(m => monthlyG[m] || 0), borderColor: C.mid, backgroundColor: C.mid + '22', tension: .3, fill: true, pointRadius: 3 },
+            { label: 'Acc', data: sortedM.map(m => monthlyA[m] || 0), borderColor: C.blue, backgroundColor: C.blue + '22', tension: .3, fill: true, pointRadius: 3 }
+          ]
+        },
+        options: {
+          plugins: { legend: { labels: { color: textColor, font: { size: 11, family: 'DM Sans' } } } },
+          scales: {
+            x: { ticks: { color: textColor, font: { size: 10 } }, grid: { color: gridColor } },
+            y: { ticks: { color: textColor, font: { size: 10 }, callback: v => `₹${v.toLocaleString('en-IN')}` }, grid: { color: gridColor } }
+          }
+        }
+      });
+
+      // Vendor bar list
+      const maxV = topVendors[0]?.[1] || 1;
+      $('vendorBarList').innerHTML = topVendors.slice(0, 8).map(([v, a]) =>
+        `<div class="bar-row"><span class="bar-label">${esc(v)}</span><div class="bar-track"><div class="bar-fill" style="width:${(a / maxV * 100).toFixed(1)}%"></div></div><span class="bar-val">${fmt(a)}</span></div>`).join('');
+
+      // Coffee type bar
+      const typeTot = {};
+      beans.forEach(l => { if (l.coffee_type) typeTot[l.coffee_type] = (typeTot[l.coffee_type] || 0) + Number(l.price || 0); });
+      const typeE = Object.entries(typeTot).sort((a, b) => b[1] - a[1]);
+      const maxT = typeE[0]?.[1] || 1;
+      const tCls = ['', 'blue', 'green', 'purple'];
+      $('typeBarList').innerHTML = typeE.length ? typeE.map(([k, a], i) =>
+        `<div class="bar-row"><span class="bar-label">${TYPEMETA[k]?.label || k}</span><div class="bar-track"><div class="bar-fill ${tCls[i] || ''}" style="width:${(a / maxT * 100).toFixed(1)}%"></div></div><span class="bar-val">${fmt(a)}</span></div>`).join('')
+        : '<p style="font-size:.78rem;color:var(--light);font-style:italic">Tag your beans with a type to see this.</p>';
+
+      // Beans × Brewer — built from journal entries
+      // Map: beanLabel → { brewer → sessionCount }
+      const beanBrewerMap = {};
+      journal.forEach(j => {
+        if (!j.brewer || !j.beanLabel) return;
+        if (!beanBrewerMap[j.beanLabel]) beanBrewerMap[j.beanLabel] = {};
+        beanBrewerMap[j.beanLabel][j.brewer] = (beanBrewerMap[j.beanLabel][j.brewer] || 0) + 1;
+      });
+      const beanBrewerEntries = Object.entries(beanBrewerMap)
+        .sort((a, b) => Object.values(b[1]).reduce((s, v) => s + v, 0) - Object.values(a[1]).reduce((s, v) => s + v, 0));
+      if (beanBrewerEntries.length) {
+        const brewerColors = ['', 'blue', 'green', 'purple', 'mid'];
+        $('brewBarList').innerHTML = beanBrewerEntries.map(([bean, brewers]) => {
+          const total = Object.values(brewers).reduce((s, v) => s + v, 0);
+          const brewerPills = Object.entries(brewers).sort((a, b) => b[1] - a[1])
+            .map(([br, c]) => `<span class="epill brew" style="font-size:.62rem">☕ ${esc(br)} ×${c}</span>`).join('');
+          return `<div class="bar-row" style="flex-direction:column;align-items:flex-start;gap:.3rem;padding:.5rem 0;border-bottom:1px solid var(--parchment)">
+        <div style="display:flex;justify-content:space-between;width:100%">
+          <span class="bar-label" style="font-size:.78rem">${esc(bean)}</span>
+          <span class="bar-val">${total} session${total !== 1 ? 's' : ''}</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:.3rem">${brewerPills}</div>
+      </div>`;
+        }).join('');
+      } else {
+        $('brewBarList').innerHTML = '<p style="font-size:.78rem;color:var(--light);font-style:italic">Log brew sessions in the Journal to see which beans pair with which brewer.</p>';
+      }
+
+      // Process breakdown
+      const procTot = {};
+      beans.forEach(l => { const p = detectProcess(l); const k = p ? p.label : 'Untagged'; procTot[k] = (procTot[k] || 0) + Number(l.price || 0); });
+      const procE = Object.entries(procTot).sort((a, b) => b[1] - a[1]);
+      const maxP = procE[0]?.[1] || 1;
+      const pCls = ['', 'green', 'blue', 'purple', 'mid'];
+      $('processBarList').innerHTML = procE.length ? procE.map(([k, a], i) =>
+        `<div class="bar-row"><span class="bar-label">${esc(k)}</span><div class="bar-track"><div class="bar-fill ${pCls[i] || ''}" style="width:${(a / maxP * 100).toFixed(1)}%"></div></div><span class="bar-val">${fmt(a)}</span></div>`).join('')
+        : '<p style="font-size:.78rem;color:var(--light);font-style:italic">Add process info to beans to see this.</p>';
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       BOOTSTRAP
+    ═══════════════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════════════════════════
+       THEME SYSTEM
+    ═══════════════════════════════════════════════════════════ */
+    function toggleTheme() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeUI();
+      // Re-render insights if active to update chart colors
+      if ($('page-insights').classList.contains('active')) renderInsights();
+    }
+
+    function applyTheme() {
+      const saved = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (saved === 'dark' || (!saved && prefersDark)) {
+        document.body.classList.add('dark-mode');
+      }
+      updateThemeUI();
+    }
+
+    function updateThemeUI() {
+      const isDark = document.body.classList.contains('dark-mode');
+      document.querySelectorAll('.theme-toggle').forEach(btn => {
+        btn.innerHTML = isDark ? '☀️' : '🌙';
+      });
+    }
+
+    function renderAll() { renderStats(); renderEntries(); }
+
+    $('inp-date').valueAsDate = new Date();
+    addItemRow();
+    updateUserUI(); // Initialize Auth UI
+    if (userToken) loadData(); // Load data only if logged in
+    applyTheme();
+  </script>
+
+  <!-- ── BAG LIFECYCLE MODAL ─────────────────────────────── -->
+  <div class="bag-modal-overlay hidden" id="bagModalOverlay" onclick="closeBagModal(event)">
+    <div class="bag-modal" id="bagModalContent">
+      <div class="bag-modal-handle"></div>
+      <div class="bag-modal-title" id="bagModalTitle">Track <em>Bag</em></div>
+      <input type="hidden" id="bagModalId">
+
+      <div class="form-divider">Key Dates</div>
+      <div class="form-row">
+        <div class="field">
+          <label class="form-label">🌿 Roast Date</label>
+          <input type="date" id="bm-roastDate">
+        </div>
+        <div class="field">
+          <label class="form-label">📦 Delivered Date</label>
+          <input type="date" id="bm-deliveredDate">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="field">
+          <label class="form-label">🔓 Opened Date</label>
+          <input type="date" id="bm-openedDate">
+        </div>
+        <div class="field">
+          <label class="form-label">✅ Finished Date</label>
+          <input type="date" id="bm-finishedDate">
+        </div>
+      </div>
+
+      <div class="form-divider">Brew Usage (grams)</div>
+      <div id="bm-gramSummary" style="font-size:.79rem;color:var(--mid);margin-bottom:.4rem;min-height:1.2em;"></div>
+      <div class="gram-track" id="bm-gramTrack" style="display:none;margin-bottom:.8rem;">
+        <div class="gram-fill" id="bm-gramFill" style="width:0%"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 90px 36px;gap:.5rem;margin-bottom:.3rem;" id="bm-gramHeaders">
+        <label class="form-label">Date</label>
+        <label class="form-label">Grams</label>
+        <span></span>
+      </div>
+      <div id="bm-gramList"></div>
+      <button class="btn-add-item" onclick="addGramEntry()" style="margin-top:.2rem;margin-bottom:.9rem">+ Add Brew
+        Entry</button>
+
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.3rem;">
+        <button class="btn-ghost" onclick="closeBagModal({target:$('bagModalOverlay')})">Cancel</button>
+        <button class="btn-primary" onclick="saveBagMeta()">💾 Save</button>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // ── PIN CONFIGURATION ──────────────────────────────
+    // SHA-256 hash of your PIN (default PIN: 2811, currently set to 2709)
+    // To change PIN: replace CORRECT_PIN_HASH with hash of your new 4-digit PIN
+    // Get hash at: https://emn178.github.io/online-tools/sha256.html
+    const CORRECT_PIN_HASH = 'f652f5c87c84f33899f9be3b2f62607ce5b61c68cac1f70bb4cdbb40d79b6904'; // hash of "2811"
+    const SESSION_KEY = 'brewlog_unlocked';
+
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    let pinInput = '';
+
+    function updateDots(state) {
+      for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById('d' + i);
+        dot.className = 'pin-dot';
+        if (state === 'error') dot.classList.add('error');
+        else if (state === 'ok') dot.classList.add('success');
+        else if (i < pinInput.length) dot.classList.add('filled');
+      }
+    }
+
+    async function pinPress(digit) {
+      if (pinInput.length >= 4) return;
+      pinInput += digit;
+      document.getElementById('pinErr').textContent = '';
+      updateDots();
+      if (pinInput.length === 4) await checkPin();
+    }
+
+    function pinDel() {
+      pinInput = pinInput.slice(0, -1);
+      document.getElementById('pinErr').textContent = '';
+      updateDots();
+    }
+
+    async function checkPin() {
+      const hash = await sha256(pinInput);
+      if (hash === CORRECT_PIN_HASH) {
+        updateDots('ok');
+        sessionStorage.setItem(SESSION_KEY, '1');
+        setTimeout(() => {
+          const overlay = document.getElementById('pin-overlay');
+          overlay.classList.add('unlocking');
+          setTimeout(() => overlay.remove(), 400);
+        }, 350);
+      } else {
+        updateDots('error');
+        document.getElementById('pinErr').textContent = 'Incorrect PIN. Try again.';
+        setTimeout(() => { pinInput = ''; updateDots(); }, 800);
+      }
+    }
+
+    // Allow keyboard input
+    document.addEventListener('keydown', e => {
+      if (!document.getElementById('pin-overlay')) return;
+      if (e.key >= '0' && e.key <= '9') pinPress(e.key);
+      else if (e.key === 'Backspace') pinDel();
+    });
+
+    // Skip overlay if already unlocked this session
+    if (sessionStorage.getItem(SESSION_KEY) === '1') {
+      document.getElementById('pin-overlay').remove();
+    }
+  </script>
+
+</body>
+
+</html>
