@@ -9,7 +9,6 @@
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@300;400&display=swap"
     rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
     :root {
       --cream: #F5EFE0;
@@ -1644,9 +1643,68 @@
       margin-bottom: .2rem;
     }
 
-    .pin-title em {
-      color: var(--caramel);
-      font-style: italic;
+    /* ── DIRECTORY & AUTOCOMPLETE ─────────────────────── */
+    .search-result-item {
+      padding: .8rem 1rem;
+      border-bottom: 1px solid var(--parchment);
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .search-result-item:hover {
+      background: var(--parchment);
+    }
+    .search-result-name {
+      font-weight: 600;
+      font-size: .88rem;
+      color: var(--espresso);
+    }
+    .search-result-meta {
+      font-size: .68rem;
+      color: var(--mid);
+      margin-top: .15rem;
+    }
+
+    .autocomplete-wrap {
+      position: relative;
+    }
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--cream);
+      border: 1px solid var(--parchment);
+      border-radius: 0 0 12px 12px;
+      box-shadow: 0 10px 25px var(--shadow);
+      z-index: 1000;
+      max-height: 250px;
+      overflow-y: auto;
+      display: none;
+    }
+    .autocomplete-list.active {
+      display: block;
+    }
+    .autocomplete-item {
+      padding: .7rem 1rem;
+      cursor: pointer;
+      border-bottom: 1px solid var(--parchment);
+      transition: background .2s;
+    }
+    .autocomplete-item:hover {
+      background: var(--steam);
+    }
+    .autocomplete-item:last-child {
+      border-bottom: none;
+    }
+    .ac-title {
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--espresso);
+      display: block;
+    }
+    .ac-meta {
+      font-size: .62rem;
+      color: var(--mid);
     }
 
     .pin-sub {
@@ -1764,59 +1822,6 @@
         transform: translateX(4px)
       }
     }
-    /* ── EXPLORE GRID ──────────────────────────────────── */
-    .explore-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-    .explore-card {
-      background: var(--steam);
-      border: 1.5px solid var(--parchment);
-      border-radius: 16px;
-      padding: 1.2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-      transition: all 0.2s;
-    }
-    .explore-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px var(--shadow);
-    }
-    .explore-roaster {
-      font-size: 0.7rem;
-      color: var(--mid);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .explore-name {
-      font-family: "Playfair Display", serif;
-      font-size: 1.1rem;
-      color: var(--espresso);
-      line-height: 1.2;
-    }
-    .explore-price {
-      font-weight: 600;
-      color: var(--caramel);
-    }
-    .explore-meta {
-      display: flex;
-      gap: 0.4rem;
-      flex-wrap: wrap;
-    }
-    .user-profile {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .user-avatar {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 1.5px solid var(--parchment);
-    }
   </style>
 </head>
 
@@ -1861,10 +1866,9 @@
       <div style="display: flex; align-items: flex-start; flex: 1;">
         <div>
           <h1>Brew <em>Log</em></h1>
-          <div class="sub">Your coffee journey · Gaurav</div>
+          <div class="sub">Your coffee journey</div>
         </div>
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
-        <div class="user-profile"></div>
       </div>
       <div style="text-align:right">
         <div style="font-size:.7rem;color:var(--mid);letter-spacing:.09em;text-transform:uppercase">Total Spent</div>
@@ -1910,7 +1914,6 @@
           <div class="sub">Beans in rotation</div>
         </div>
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
-        <div class="user-profile"></div>
       </div>
       <div style="text-align:right">
         <div style="font-size:.7rem;color:var(--mid);letter-spacing:.09em;text-transform:uppercase">On Shelf</div>
@@ -1936,20 +1939,24 @@
     </div>
   </div>
 
-  <!-- ── PROCESS PAGE ─────────────────────────────────────── -->
-  <div class="page" id="page-process">
+  <!-- ── DIRECTORY PAGE ───────────────────────────────────── -->
+  <div class="page" id="page-directory">
     <div class="page-header">
       <div style="display: flex; align-items: flex-start; flex: 1;">
         <div>
-          <h1>Beans by <em>Process</em></h1>
-          <div class="sub">Washed · Natural · Honey · Anaerobic</div>
+          <h1>Bean <em>Directory</em></h1>
+          <div class="sub">Search & discover specialty coffee</div>
         </div>
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
-        <div class="user-profile"></div>
       </div>
     </div>
     <div class="page-content">
-      <div id="processList"></div>
+      <div class="panel" style="margin-bottom: 1.2rem; padding: 1rem;">
+        <div class="field" style="margin-bottom: 0;">
+          <input type="text" id="directory-search" placeholder="Search by roaster, name, or process..." oninput="debouncedSearchDirectory()" style="margin-bottom: 0;">
+        </div>
+      </div>
+      <div id="directoryList"></div>
     </div>
   </div>
 
@@ -1962,7 +1969,6 @@
           <div class="sub">Sessions, tasting notes, ratings</div>
         </div>
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
-        <div class="user-profile"></div>
       </div>
       <button class="btn-primary" onclick="openJournalModal()">+ New Session</button>
     </div>
@@ -1996,7 +2002,6 @@
             Spend analytics</div>
         </div>
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
-        <div class="user-profile"></div>
       </div>
       <div style="text-align:right">
         <div style="font-size:.7rem;color:var(--mid);letter-spacing:.09em;text-transform:uppercase">Total</div>
@@ -2078,34 +2083,12 @@
     </div>
   </div>
 
-  <!-- ── EXPLORE PAGE (ICB DIRECTORY) ───────────────────── -->
-  <div class="page" id="page-explore">
-    <div class="page-header">
-      <div style="display: flex; align-items: flex-start; flex: 1;">
-        <div>
-          <h1>Explore <em>Beans</em></h1>
-          <div class="sub">Indian Coffee Directory</div>
-        </div>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
-        <div class="user-profile"></div>
-      </div>
-      <div style="text-align:right">
-        <div style="font-size:.7rem;color:var(--mid);letter-spacing:.09em;text-transform:uppercase">Direct from ICB</div>
-      </div>
-    </div>
-    <div class="page-content">
-      <div class="panel">
-        <input type="text" id="exploreSearch" placeholder="Search roasters, beans, regions..." oninput="filterExplore()">
-      </div>
-      <div id="exploreList" class="explore-grid"></div>
-    </div>
-  </div>
+  <!-- ── ADD ORDER PAGE ──────────────────────────────────── -->
   <div class="page" id="page-add">
     <div class="page-header">
       <div style="display: flex; align-items: flex-start; flex: 1;">
         <h1 id="addPageTitle">New <em>Order</em></h1>
         <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌓</button>
-        <div class="user-profile"></div>
       </div>
     </div>
     <div class="page-content">
@@ -2374,11 +2357,8 @@
     <button class="nav-btn" id="nav-shelf" onclick="showPage('shelf')">
       <span class="nav-icon">🫙</span><span class="nav-label">Shelf</span>
     </button>
-    <button class="nav-btn" id="nav-process" onclick="showPage('process')">
-      <span class="nav-icon">🌿</span><span class="nav-label">Process</span>
-    </button>
-    <button class="nav-btn" id="nav-explore" onclick="showPage('explore')">
-      <span class="nav-icon">🌍</span><span class="nav-label">Explore</span>
+    <button class="nav-btn" id="nav-directory" onclick="showPage('directory')">
+      <span class="nav-icon">🔍</span><span class="nav-label">Directory</span>
     </button>
     <button class="nav-btn" id="nav-journal" onclick="showPage('journal')">
       <span class="nav-icon">📓</span><span class="nav-label">Journal</span>
@@ -2396,154 +2376,9 @@
        CONSTANTS & STATE
     ═══════════════════════════════════════════════════════════ */
     const API = '/api/logs';
-    const ICB_API = '/api/explore';
-    
     const $ = id => document.getElementById(id);
-    const esc = str => String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
     const fmt = v => '₹' + Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
     const fmtDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
-
-    let userToken = localStorage.getItem('google_token');
-    let userData = JSON.parse(localStorage.getItem('user_data') || 'null');
-    let exploreData = [];
-
-    // Centralized Auth Fetch
-    async function authFetch(url, options = {}) {
-      if (!userToken) {
-        console.warn('No user token found. Request may fail.');
-      }
-      const headers = { 
-        ...options.headers, 
-        'Authorization': `Bearer ${userToken}`,
-        'Content-Type': 'application/json'
-      };
-      const resp = await fetch(url, { ...options, headers });
-      if (resp.status === 401) {
-        logout();
-        return null;
-      }
-      return resp;
-    }
-
-    // Google Auth Callback
-    function handleCredentialResponse(response) {
-      userToken = response.credential;
-      localStorage.setItem('google_token', userToken);
-      
-      // Decode JWT for profile info
-      const base64Url = userToken.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const payload = JSON.parse(window.atob(base64));
-      
-      userData = {
-        name: payload.name,
-        email: payload.email,
-        picture: payload.picture
-      };
-      localStorage.setItem('user_data', JSON.stringify(userData));
-      
-      updateUserUI();
-      loadData();
-    }
-
-    function logout() {
-      userToken = null;
-      userData = null;
-      localStorage.removeItem('google_token');
-      localStorage.removeItem('user_data');
-      updateUserUI();
-      
-      // Clear data
-      logs = []; orders = []; journal = []; bagMeta = {};
-      renderAll();
-    }
-
-    function updateUserUI() {
-      document.querySelectorAll('.user-profile').forEach(profileEl => {
-        if (userData) {
-          profileEl.innerHTML = `
-            <img src="${userData.picture}" class="user-avatar" title="${userData.name}">
-            <button class="btn-rm" onclick="logout()" title="Logout" style="font-size: 1.2rem">⎋</button>
-          `;
-        } else {
-          profileEl.innerHTML = `
-            <div class="g_id_signin"></div>
-          `;
-        }
-      });
-      // Initialize Google buttons on all .g_id_signin elements
-      if (!userData && window.google) {
-        document.querySelectorAll('.g_id_signin').forEach(btn => {
-          google.accounts.id.renderButton(btn, { type: 'icon', shape: 'circle', theme: 'outline', size: 'large' });
-        });
-      }
-    }
-
-    /* ═══════════════════════════════════════════════════════════
-       EXPLORE: ICB DIRECTORY
-    ═══════════════════════════════════════════════════════════ */
-    async function fetchExplore() {
-      if (exploreData.length) return;
-      $('exploreList').innerHTML = '<div class="empty-state"><div class="icon">⏳</div><p>Loading beans from ICB…</p></div>';
-      try {
-        const res = await fetch(ICB_API);
-        if (!res.ok) throw new Error('API returned ' + res.status);
-        const raw = await res.json();
-        // Handle both array and {data:[...]} formats
-        exploreData = Array.isArray(raw) ? raw : (raw.data || raw.products || raw.items || raw.results || []);
-        if (!exploreData.length) {
-          $('exploreList').innerHTML = '<div class="empty-state"><div class="icon">☕</div><p>No beans found. The ICB API may have changed.</p></div>';
-          console.warn('ICB response shape:', Object.keys(raw));
-          return;
-        }
-        renderExplore();
-      } catch (e) {
-        console.error('Explore fetch failed', e);
-        $('exploreList').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><p>Failed to load bean directory.<br><small>' + e.message + '</small></p></div>';
-      }
-    }
-
-    function renderExplore(filterTxt = '') {
-      const list = $('exploreList');
-      const query = filterTxt.toLowerCase();
-      
-      const filtered = exploreData.filter(b => 
-        b.title?.toLowerCase().includes(query) || 
-        b.roasterName?.toLowerCase().includes(query) ||
-        b.description?.toLowerCase().includes(query)
-      ).slice(0, 50); // Limit to 50 for performance
-
-      list.innerHTML = filtered.map(b => `
-        <div class="explore-card">
-          <div class="explore-roaster">${esc(b.roasterName)}</div>
-          <div class="explore-name">${esc(b.title)}</div>
-          <div class="explore-price">${fmt(b.price)}</div>
-          <div class="explore-meta">
-            ${b.roastLevel ? `<span class="epill">${esc(b.roastLevel)}</span>` : ''}
-            ${b.process ? `<span class="epill">${esc(b.process)}</span>` : ''}
-          </div>
-          <button class="btn-add-item" style="margin-top:auto" onclick="quickAdd('${esc(b.roasterName)}', '${esc(b.title)}', ${b.price}, '${esc(b.process)}', '${esc(b.roastLevel)}')">
-            ＋ Quick Add
-          </button>
-        </div>
-      `).join('');
-    }
-
-    function filterExplore() {
-      renderExplore($('exploreSearch').value);
-    }
-
-    function quickAdd(roaster, name, price, process, roast) {
-      showPage('add');
-      resetForm();
-      // itemCount is 1 after resetForm → addItemRow
-      $('item-cat-1').value = 'beans';
-      toggleBeansFields(1);
-      $('item-name-1').value = name;
-      $('item-roaster-1').value = roaster;
-      $('item-price-1').value = price;
-      $('inp-vendor').value = roaster;
-    }
 
     const TYPEMETA = {
       'single-estate': { label: 'Single Estate', cls: '' },
@@ -2554,6 +2389,7 @@
     const BREW_OPTS = ['French Press', 'Cafflano Kompresso', 'Moka Pot', 'V60', 'AeroPress', 'Espresso Machine', 'Cold Brew', 'Siphon'];
     const SIZE_OPTS = ['100g', '200g', '250g', '500g', '1kg'];
 
+    // Process detection — maps keywords in name/notes → canonical process
     const PROCESS_MAP = [
       { key: 'natural', label: 'Natural', icon: '🍒', hint: 'sun-dried, dry process' },
       { key: 'washed', label: 'Washed', icon: '💧', hint: 'wet process, fully washed' },
@@ -2567,9 +2403,13 @@
     let editingId = null;
     let itemCount = 0;
 
-    let finishedBags = [];
-    let bagMeta = {};
-    let journal = [];
+    let beanIndex = [];
+    let searchTimeout = null;
+
+    // Shelf & journal — all synced to D1, no localStorage
+    let finishedBags = [];  // derived from bagMeta
+    let bagMeta = {};       // keyed by log_id (number), loaded from /api/shelf
+    let journal = [];       // loaded from /api/journal
     let jRating = 0;
     let jEditId = null;
 
@@ -2585,21 +2425,29 @@
       $('nav-' + name).classList.add('active');
       window.scrollTo({ top: 0, behavior: 'instant' });
       if (name === 'shelf') renderShelf();
-      if (name === 'process') renderProcess();
+      if (name === 'directory') renderDirectory();
       if (name === 'journal') renderJournal();
       if (name === 'insights') renderInsights();
-      if (name === 'explore') fetchExplore();
     }
 
     /* ═══════════════════════════════════════════════════════════
        LOAD DATA FROM API
     ═══════════════════════════════════════════════════════════ */
     async function loadData() {
-      if (!userToken) return;
+      // Check for file protocol which breaks fetch
+      if (window.location.protocol === 'file:') {
+        const warning = document.createElement('div');
+        warning.style = 'position:fixed;top:0;left:0;right:0;background:#ff4757;color:white;padding:10px;text-align:center;z-index:9999;font-size:12px;font-weight:bold;';
+        warning.innerHTML = '⚠️ Brew Log requires a local server. Local files/API cannot be loaded via file:// protocol.<br><code style="background:rgba(0,0,0,0.2);padding:2px 5px;border-radius:3px;">npx wrangler pages dev .</code>';
+        document.body.appendChild(warning);
+        console.error('Brew Log: fetch() is blocked on file:// protocol. Use a local server.');
+        renderAll();
+        return;
+      }
 
+      // Fetch logs (critical)
       try {
-        const res = await authFetch(API);
-        if (!res) return;
+        const res = await fetch(API);
         const data = await res.json();
         logs = data.logs || [];
         orders = data.orders || [];
@@ -2607,9 +2455,9 @@
         console.error('Logs fetch error:', e);
       }
 
+      // Fetch journal
       try {
-        const res = await authFetch(API + '?route=journal');
-        if (!res) return;
+        const res = await fetch(API + '?route=journal');
         const data = await res.json();
         journal = (data.journal || []).map(j => ({
           ...j,
@@ -2621,9 +2469,9 @@
         console.error('Journal fetch error:', e);
       }
 
+      // Fetch shelf meta
       try {
-        const res = await authFetch(API + '?route=shelf');
-        if (!res) return;
+        const res = await fetch(API + '?route=shelf');
         const data = await res.json();
         bagMeta = {};
         (data.shelf || []).forEach(s => {
@@ -2646,13 +2494,37 @@
         console.error('Shelf fetch error:', e);
       }
 
+      // Fetch Bean Index
+      try {
+        const res = await fetch('search-index.json');
+        beanIndex = await res.json();
+        // Add searchable text for performance
+        beanIndex.forEach(b => {
+          b.searchableText = [b.title, b.metadata?.coffee?.roasterName, b.metadata?.coffee?.process].filter(Boolean).join(' ');
+        });
+      } catch (e) {
+        console.error('Bean Index fetch error:', e);
+      }
+
       renderAll();
     }
 
+    function renderAll() {
+      if (!$('page-log')) return; // not initialized
+      renderStats();
+      renderEntries();
+      if ($('page-shelf').classList.contains('active')) renderShelf();
+      if ($('page-directory')?.classList.contains('active')) renderDirectory();
+      if ($('page-journal').classList.contains('active')) renderJournal();
+      if ($('page-insights').classList.contains('active')) renderInsights();
+    }
+
+    // Helper: persist a bag's meta to D1
     async function _syncShelf(id) {
       const m = bagMeta[id] || {};
-      await authFetch(API + '?route=shelf', {
+      await fetch(API + '?route=shelf', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           log_id: id,
           roastDate: m.roastDate || '',
@@ -2686,7 +2558,10 @@
     </div>
     <div class="form-row full"><div class="field">
       <label class="form-label">Product Name</label>
-      <input type="text" id="item-name-${n}" value="${esc(prefill.name || '')}" placeholder="e.g. Baarbara Washed AA">
+      <div class="autocomplete-wrap">
+        <input type="text" id="item-name-${n}" value="${esc(prefill.name || '')}" placeholder="e.g. Baarbara Washed AA" oninput="handleNameInput(${n})" autocomplete="off">
+        <div id="ac-list-${n}" class="autocomplete-list"></div>
+      </div>
     </div></div>
     <div class="form-row">
       <div class="field">
@@ -2796,7 +2671,7 @@
         qty: 1
       };
     }
-    // esc is defined at the top as a const
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
     /* ═══════════════════════════════════════════════════════════
        SAVE / EDIT / DELETE
@@ -2821,8 +2696,8 @@
       if (editingId) {
         const item = items[0];
         try {
-          const res = await authFetch(API, {
-            method: 'PUT',
+          const res = await fetch(API, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               id: editingId, order_id: orderId, date, vendor,
               category: item.category, name: item.name, price: isCombo ? 0 : item.price,
@@ -2832,17 +2707,17 @@
               is_combo: isCombo, combo_price: comboPrice
             })
           });
-          if (res && res.ok) { await loadData(); resetForm(); showPage('log'); }
-          else if (res) alert('Save failed: ' + await res.text());
+          if (res.ok) { await loadData(); resetForm(); showPage('log'); }
+          else alert('Save failed: ' + await res.text());
         } catch (e) { alert('Error: ' + e.message); }
       } else {
         try {
-          const res = await authFetch(API, {
-            method: 'POST',
+          const res = await fetch(API, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ order: { order_id: orderId, date, vendor, is_combo: isCombo, combo_price: comboPrice, notes: '' }, items })
           });
-          if (res && res.ok) { await loadData(); resetForm(); showPage('log'); }
-          else if (res) alert('Save failed: ' + await res.text());
+          if (res.ok) { await loadData(); resetForm(); showPage('log'); }
+          else alert('Save failed: ' + await res.text());
         } catch (e) { alert('Error: ' + e.message); }
       }
     }
@@ -2878,8 +2753,8 @@
     async function deleteEntry(id) {
       if (!confirm('Remove this entry?')) return;
       try {
-        const res = await authFetch(API, { method: 'DELETE', body: JSON.stringify({ id }) });
-        if (res && res.ok) { if (editingId === id) resetForm(); await loadData(); }
+        const res = await fetch(API, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+        if (res.ok) { if (editingId === id) resetForm(); await loadData(); }
       } catch (e) { alert('Delete failed: ' + e.message); }
     }
 
@@ -3423,33 +3298,31 @@
 
       // Sync to D1
       if (jEditId) {
-        await authFetch(API + '?route=journal', {
-          method: 'PUT', body: JSON.stringify(entry)
+        await fetch(API + '?route=journal', {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
         });
       } else {
-        await authFetch(API + '?route=journal', {
-          method: 'POST', body: JSON.stringify(entry)
+        await fetch(API + '?route=journal', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
         });
       }
       // Reload from D1 so all devices stay in sync
-      const jr = await authFetch(API + '?route=journal');
-      if (jr) {
-        const jd = await jr.json();
-        journal = (jd.journal || []).map(j => ({
-          ...j,
-          beanId: j.beanId || j.bean_id,
-          beanLabel: j.beanLabel || j.bean_label,
-          tastes: typeof j.tastes === 'string' ? JSON.parse(j.tastes || '[]') : (j.tastes || []),
-        }));
-      }
+      const jr = await fetch(API + '?route=journal');
+      const jd = await jr.json();
+      journal = (jd.journal || []).map(j => ({
+        ...j,
+        beanId: j.beanId || j.bean_id,
+        beanLabel: j.beanLabel || j.bean_label,
+        tastes: typeof j.tastes === 'string' ? JSON.parse(j.tastes || '[]') : (j.tastes || []),
+      }));
       closeJModal();
       renderJournal();
     }
 
     async function deleteJournalEntry(id) {
       if (!confirm('Delete this session?')) return;
-      await authFetch(API, {
-        method: 'POST',
+      await fetch(API, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'deleteJournal', id })
       });
       journal = journal.filter(j => String(j.id) !== String(id));
@@ -3663,66 +3536,184 @@
     }
 
     /* ═══════════════════════════════════════════════════════════
-       BOOTSTRAP
-    ═══════════════════════════════════════════════════════════ */
-    /* ═══════════════════════════════════════════════════════════
-       THEME SYSTEM
+       BOOTSTRAP / THEME / INITIALS
     ═══════════════════════════════════════════════════════════ */
     function toggleTheme() {
       const isDark = document.body.classList.toggle('dark-mode');
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
       updateThemeUI();
-      // Re-render insights if active to update chart colors
       if ($('page-insights').classList.contains('active')) renderInsights();
     }
 
     function applyTheme() {
       const saved = localStorage.getItem('theme');
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (saved === 'dark' || (!saved && prefersDark)) {
-        document.body.classList.add('dark-mode');
-      }
+      if (saved === 'dark' || (!saved && prefersDark)) document.body.classList.add('dark-mode');
       updateThemeUI();
     }
 
     function updateThemeUI() {
       const isDark = document.body.classList.contains('dark-mode');
-      document.querySelectorAll('.theme-toggle').forEach(btn => {
-        btn.innerHTML = isDark ? '☀️' : '🌙';
-      });
+      document.querySelectorAll('.theme-toggle').forEach(btn => btn.innerHTML = isDark ? '☀️' : '🌙');
     }
 
-    function renderAll() { renderStats(); renderEntries(); }
-
-    $('inp-date').valueAsDate = new Date();
-    addItemRow();
-    applyTheme();
-
-    // Google Identity Services init — fires when GSI library is ready
-    function initGoogleAuth() {
-      google.accounts.id.initialize({
-        client_id: '948876617439-3ht5ofkikeq6iunotqlrmprac34sccmd.apps.googleusercontent.com',
-        callback: handleCredentialResponse,
-        auto_select: false
-      });
-      updateUserUI();
-      if (userToken) loadData();
+    function renderAll() {
+      renderStats();
+      renderEntries();
+      if ($('page-shelf').classList.contains('active')) renderShelf();
+      if ($('page-directory')?.classList.contains('active')) renderDirectory();
+      if ($('page-journal').classList.contains('active')) renderJournal();
+      if ($('page-insights').classList.contains('active')) renderInsights();
     }
 
-    // GSI may already be loaded or may load later
-    if (window.google && window.google.accounts) {
-      initGoogleAuth();
-    } else {
-      // Poll for GSI readiness (it loads async defer)
-      const _gsiCheck = setInterval(() => {
-        if (window.google && window.google.accounts) {
-          clearInterval(_gsiCheck);
-          initGoogleAuth();
+    /* ═══════════════════════════════════════════════════════════
+       DIRECTORY & AUTOCOMPLETE LOGIC
+    ═══════════════════════════════════════════════════════════ */
+    function debouncedSearchDirectory() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => renderDirectory(), 300);
+    }
+
+    function renderDirectory() {
+      const q = ($('directory-search')?.value || '').toLowerCase().trim();
+      const list = q.length < 2 ? beanIndex.slice(0, 15) : beanIndex.filter(b => b.searchableText?.toLowerCase().includes(q)).slice(0, 50);
+      const listEl = $('directoryList');
+      if (!listEl) return;
+      if (!list.length) {
+        listEl.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>No beans found matching that search.</p></div>';
+        return;
+      }
+      listEl.innerHTML = list.map(b => `
+        <div class="shelf-card">
+          <div class="shelf-left">
+            <div class="shelf-name">${esc(b.title)}</div>
+            <div class="shelf-roaster">${esc(b.metadata?.coffee?.roasterName || 'Unknown Roaster')}</div>
+            <div class="shelf-pills">
+              ${b.metadata?.coffee?.roastLevel ? `<span class="epill">${esc(b.metadata.coffee.roastLevel)}</span>` : ''}
+              ${b.metadata?.coffee?.process ? `<span class="epill process">${esc(b.metadata.coffee.process)}</span>` : ''}
+              ${b.metadata?.coffee?.bestNormalized250g ? `<span class="epill brew">₹${b.metadata.coffee.bestNormalized250g} / 250g</span>` : ''}
+            </div>
+          </div>
+          <div class="shelf-right">
+            <button class="btn-primary" style="font-size: .65rem; padding: .4rem .7rem;" onclick="quickAddFromIndex('${b.id}')">+ Add</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function quickAddFromIndex(id) {
+      const b = beanIndex.find(x => x.id === id);
+      if (!b) return;
+      showPage('add');
+      resetForm();
+      fillItemFromBean(itemCount, b);
+    }
+
+    function fillItemFromBean(n, b) {
+      const nameInp = $(`item-name-${n}`);
+      if (nameInp) nameInp.value = b.title;
+      const roastInp = $(`item-roaster-${n}`);
+      if (roastInp) roastInp.value = b.metadata?.coffee?.roasterName || '';
+      const catInp = $(`item-cat-${n}`);
+      if (catInp) { catInp.value = 'beans'; toggleBeansFields(n); }
+      if (b.metadata?.coffee?.price && !$('inp-combo').checked) {
+        const priceInp = $(`item-price-${n}`);
+        if (priceInp) priceInp.value = b.metadata.coffee.price;
+      }
+      const proc = (b.metadata?.coffee?.process || '').toLowerCase();
+      const matched = ['natural', 'washed', 'honey', 'anaerobic', 'wet hulled'].find(p => proc.includes(p));
+      if (matched) {
+        const val = matched === 'wet hulled' ? 'Wet Hulled' : matched.charAt(0).toUpperCase() + matched.slice(1);
+        const pill = document.querySelector(`#process-pills-${n} .pill-opt[data-val="${val}"]`);
+        if (pill) selectPill(pill, `process-pills-${n}`);
+        toggleCustomProcess(n);
+      } else if (proc) {
+        const customPill = document.querySelector(`#process-pills-${n} .pill-opt[data-val="__custom__"]`);
+        if (customPill) {
+          selectPill(customPill, `process-pills-${n}`);
+          toggleCustomProcess(n);
+          const cpInp = $(`custom-process-${n}`);
+          if (cpInp) cpInp.value = b.metadata.coffee.process;
         }
-      }, 100);
-      // Fallback: if logged in already, load data immediately
-      if (userToken) loadData();
+      }
+      $(`ac-list-${n}`)?.classList.remove('active');
     }
+
+    function handleNameInput(n) {
+      const q = $(`item-name-${n}`).value.toLowerCase().trim();
+      const listEl = $(`ac-list-${n}`);
+      if (!listEl) return;
+      if (q.length < 2) { listEl.classList.remove('active'); return; }
+      const matches = beanIndex.filter(b => b.searchableText?.toLowerCase().includes(q)).slice(0, 5);
+      if (!matches.length) { listEl.classList.remove('active'); return; }
+      listEl.innerHTML = matches.map(b => `
+        <div class="autocomplete-item" onclick="fillItemFromBean(${n}, beanIndex.find(x=>x.id==='${b.id}'))">
+          <span class="ac-title">${esc(b.title)}</span>
+          <span class="ac-meta">${esc(b.metadata?.coffee?.roasterName || '')} · ${esc(b.metadata?.coffee?.process || '')}</span>
+        </div>
+      `).join('');
+      listEl.classList.add('active');
+    }
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.autocomplete-wrap')) document.querySelectorAll('.autocomplete-list').forEach(l => l.classList.remove('active'));
+    });
+
+    /* ═══════════════════════════════════════════════════════════
+       PIN & INITIALIZATION
+    ═══════════════════════════════════════════════════════════ */
+    const CORRECT_PIN_HASH = '61f5869c42cc56c113f931c7ed19126205121938aaa9ccede69b20ec83a300e1';
+    const SESSION_KEY = 'brewlog_unlocked';
+
+    async function sha256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    let pinInput = '';
+    function updateDots(state) {
+      for (let i = 0; i < 4; i++) {
+        const d = $('d' + i); if (!d) continue;
+        d.className = 'pin-dot';
+        if (state === 'error') d.classList.add('error');
+        else if (state === 'ok') d.classList.add('success');
+        else if (i < pinInput.length) d.classList.add('filled');
+      }
+    }
+
+    async function pinPress(digit) {
+      if (pinInput.length >= 4) return;
+      pinInput += digit; updateDots();
+      if (pinInput.length === 4) await checkPin();
+    }
+
+    function pinDel() { pinInput = pinInput.slice(0, -1); updateDots(); }
+
+    async function checkPin() {
+      if (await sha256(pinInput) === CORRECT_PIN_HASH) {
+        updateDots('ok'); sessionStorage.setItem(SESSION_KEY, '1');
+        setTimeout(() => { const o = $('pin-overlay'); if (o) { o.classList.add('unlocking'); setTimeout(() => o.remove(), 400); } }, 350);
+      } else {
+        updateDots('error');
+        setTimeout(() => { pinInput = ''; updateDots(); }, 800);
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (!$('pin-overlay')) return;
+      if (e.key >= '0' && e.key <= '9') pinPress(e.key);
+      else if (e.key === 'Backspace') pinDel();
+    });
+
+    if (sessionStorage.getItem(SESSION_KEY) === '1') $('pin-overlay')?.remove();
+
+    window.onload = async () => {
+      applyTheme();
+      const di = $('inp-date'); if (di) di.valueAsDate = new Date();
+      addItemRow();
+      await loadData();
+    };
   </script>
 
   <!-- ── BAG LIFECYCLE MODAL ─────────────────────────────── -->
@@ -3775,78 +3766,5 @@
     </div>
   </div>
 
-
-  <script>
-    // ── PIN CONFIGURATION ──────────────────────────────
-    // SHA-256 hash of your PIN (default PIN: 2811, currently set to 2709)
-    // To change PIN: replace CORRECT_PIN_HASH with hash of your new 4-digit PIN
-    // Get hash at: https://emn178.github.io/online-tools/sha256.html
-    const CORRECT_PIN_HASH = 'f652f5c87c84f33899f9be3b2f62607ce5b61c68cac1f70bb4cdbb40d79b6904'; // hash of "2811"
-    const SESSION_KEY = 'brewlog_unlocked';
-
-    async function sha256(message) {
-      const msgBuffer = new TextEncoder().encode(message);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    let pinInput = '';
-
-    function updateDots(state) {
-      for (let i = 0; i < 4; i++) {
-        const dot = document.getElementById('d' + i);
-        dot.className = 'pin-dot';
-        if (state === 'error') dot.classList.add('error');
-        else if (state === 'ok') dot.classList.add('success');
-        else if (i < pinInput.length) dot.classList.add('filled');
-      }
-    }
-
-    async function pinPress(digit) {
-      if (pinInput.length >= 4) return;
-      pinInput += digit;
-      document.getElementById('pinErr').textContent = '';
-      updateDots();
-      if (pinInput.length === 4) await checkPin();
-    }
-
-    function pinDel() {
-      pinInput = pinInput.slice(0, -1);
-      document.getElementById('pinErr').textContent = '';
-      updateDots();
-    }
-
-    async function checkPin() {
-      const hash = await sha256(pinInput);
-      if (hash === CORRECT_PIN_HASH) {
-        updateDots('ok');
-        sessionStorage.setItem(SESSION_KEY, '1');
-        setTimeout(() => {
-          const overlay = document.getElementById('pin-overlay');
-          overlay.classList.add('unlocking');
-          setTimeout(() => overlay.remove(), 400);
-        }, 350);
-      } else {
-        updateDots('error');
-        document.getElementById('pinErr').textContent = 'Incorrect PIN. Try again.';
-        setTimeout(() => { pinInput = ''; updateDots(); }, 800);
-      }
-    }
-
-    // Allow keyboard input
-    document.addEventListener('keydown', e => {
-      if (!document.getElementById('pin-overlay')) return;
-      if (e.key >= '0' && e.key <= '9') pinPress(e.key);
-      else if (e.key === 'Backspace') pinDel();
-    });
-
-    // Skip overlay if already unlocked this session
-    if (sessionStorage.getItem(SESSION_KEY) === '1') {
-      document.getElementById('pin-overlay').remove();
-    }
-  </script>
-
 </body>
-
 </html>
