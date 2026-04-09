@@ -4,5 +4,5 @@ pages_build_output_dir = "."
 
 [[d1_databases]]
 binding = "DB"
-database_name = "coffeeforgaurav"
-database_id = "2f438066-8438-487e-b742-8704b135c77a"
+database_name = "coffeetracker_0"
+database_id = "e1d93b86-7553-4511-8b2c-957b5640da04"
