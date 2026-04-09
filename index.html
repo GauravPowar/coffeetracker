@@ -2446,6 +2446,14 @@
         return;
       }
 
+      // If locked, don't fetch sensitive data yet
+      if (sessionStorage.getItem(SESSION_KEY) !== '1') {
+        // We still fetch the public bean index though
+        await fetchBeanIndex();
+        renderAll();
+        return;
+      }
+
       // Fetch logs (critical)
       try {
         const res = await fetch(API, { headers: getAuthHeaders() });
@@ -3716,6 +3724,8 @@
         updateDots('ok'); 
         sessionStorage.setItem(SESSION_KEY, '1');
         sessionStorage.setItem('brewlog_pin', pinInput);
+        // Load data now that we are unlocked
+        await loadData();
         setTimeout(() => { const o = $('pin-overlay'); if (o) { o.classList.add('unlocking'); setTimeout(() => o.remove(), 400); } }, 350);
       } else {
         updateDots('error');
