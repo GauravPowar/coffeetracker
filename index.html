@@ -2379,6 +2379,7 @@
     const $ = id => document.getElementById(id);
     const fmt = v => '₹' + Number(v || 0).toLocaleString('en-IN', { maximumFractionDigits: 0 });
     const fmtDate = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '';
+    const getAuthHeaders = () => ({ 'Authorization': sessionStorage.getItem('brewlog_pin') || '', 'Content-Type': 'application/json' });
 
     const TYPEMETA = {
       'single-estate': { label: 'Single Estate', cls: '' },
@@ -2447,7 +2448,7 @@
 
       // Fetch logs (critical)
       try {
-        const res = await fetch(API);
+        const res = await fetch(API, { headers: getAuthHeaders() });
         const data = await res.json();
         logs = data.logs || [];
         orders = data.orders || [];
@@ -2457,7 +2458,7 @@
 
       // Fetch journal
       try {
-        const res = await fetch(API + '?route=journal');
+        const res = await fetch(API + '?route=journal', { headers: getAuthHeaders() });
         const data = await res.json();
         journal = (data.journal || []).map(j => ({
           ...j,
@@ -2471,7 +2472,7 @@
 
       // Fetch shelf meta
       try {
-        const res = await fetch(API + '?route=shelf');
+        const res = await fetch(API + '?route=shelf', { headers: getAuthHeaders() });
         const data = await res.json();
         bagMeta = {};
         (data.shelf || []).forEach(s => {
@@ -2541,7 +2542,7 @@
       const m = bagMeta[id] || {};
       await fetch(API + '?route=shelf', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           log_id: id,
           roastDate: m.roastDate || '',
@@ -2714,7 +2715,7 @@
         const item = items[0];
         try {
           const res = await fetch(API, {
-            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            method: 'PUT', headers: getAuthHeaders(),
             body: JSON.stringify({
               id: editingId, order_id: orderId, date, vendor,
               category: item.category, name: item.name, price: isCombo ? 0 : item.price,
@@ -2730,7 +2731,7 @@
       } else {
         try {
           const res = await fetch(API, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: getAuthHeaders(),
             body: JSON.stringify({ order: { order_id: orderId, date, vendor, is_combo: isCombo, combo_price: comboPrice, notes: '' }, items })
           });
           if (res.ok) { await loadData(); resetForm(); showPage('log'); }
@@ -2770,7 +2771,7 @@
     async function deleteEntry(id) {
       if (!confirm('Remove this entry?')) return;
       try {
-        const res = await fetch(API, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+        const res = await fetch(API, { method: 'DELETE', headers: getAuthHeaders(), body: JSON.stringify({ id }) });
         if (res.ok) { if (editingId === id) resetForm(); await loadData(); }
       } catch (e) { alert('Delete failed: ' + e.message); }
     }
@@ -3077,22 +3078,25 @@
     }
 
     async function saveBagMeta() {
-      const id = Number($('bagModalId').value);
-      if (!bagMeta[id]) bagMeta[id] = {};
-      bagMeta[id].roastDate = $('bm-roastDate').value;
-      bagMeta[id].deliveredDate = $('bm-deliveredDate').value;
-      bagMeta[id].openedDate = $('bm-openedDate').value;
-      bagMeta[id].finishedDate = $('bm-finishedDate').value;
+      const id = $('bagModalId').value;
+      const meta = {
+        roastDate: $('bm-roastDate').value,
+        deliveredDate: $('bm-deliveredDate').value,
+        openedDate: $('bm-openedDate').value,
+        finishedDate: $('bm-finishedDate').value,
+        gramEntries: [...bagMeta[id]?.gramEntries || []]
+      };
+      await fetch(API + '?route=shelf', {
+        method: 'POST', headers: getAuthHeaders(), body: JSON.stringify({ id, meta })
+      });
       // Sync finished state
-      if (bagMeta[id].finishedDate) {
+      if (meta.finishedDate) {
         bagMeta[id].isFinished = true;
-        if (!finishedBags.includes(id)) finishedBags.push(id);
+        if (!finishedBags.includes(Number(id))) finishedBags.push(Number(id));
       } else {
         bagMeta[id].isFinished = false;
-        finishedBags = finishedBags.filter(x => x !== id);
+        finishedBags = finishedBags.filter(x => x !== Number(id));
       }
-      // Persist to D1
-      await _syncShelf(id);
       $('bagModalOverlay').classList.add('hidden');
       document.body.style.overflow = '';
       renderShelf();
@@ -3316,15 +3320,15 @@
       // Sync to D1
       if (jEditId) {
         await fetch(API + '?route=journal', {
-          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
+          method: 'PUT', headers: getAuthHeaders(), body: JSON.stringify(entry)
         });
       } else {
         await fetch(API + '?route=journal', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
+          method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(entry)
         });
       }
       // Reload from D1 so all devices stay in sync
-      const jr = await fetch(API + '?route=journal');
+      const jr = await fetch(API + '?route=journal', { headers: getAuthHeaders() });
       const jd = await jr.json();
       journal = (jd.journal || []).map(j => ({
         ...j,
@@ -3339,7 +3343,7 @@
     async function deleteJournalEntry(id) {
       if (!confirm('Delete this session?')) return;
       await fetch(API, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: getAuthHeaders(),
         body: JSON.stringify({ action: 'deleteJournal', id })
       });
       journal = journal.filter(j => String(j.id) !== String(id));
@@ -3709,7 +3713,9 @@
 
     async function checkPin() {
       if (await sha256(pinInput) === CORRECT_PIN_HASH) {
-        updateDots('ok'); sessionStorage.setItem(SESSION_KEY, '1');
+        updateDots('ok'); 
+        sessionStorage.setItem(SESSION_KEY, '1');
+        sessionStorage.setItem('brewlog_pin', pinInput);
         setTimeout(() => { const o = $('pin-overlay'); if (o) { o.classList.add('unlocking'); setTimeout(() => o.remove(), 400); } }, 350);
       } else {
         updateDots('error');
