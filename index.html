@@ -2503,26 +2503,24 @@
         console.error('Shelf fetch error:', e);
       }
 
+      await fetchBeanIndex();
+      renderAll();
+    }
+
+    async function fetchBeanIndex() {
       // Fetch Bean Index (Remote with Local Fallback)
       try {
         const REMOTE_INDEX = 'https://www.indiancoffeebeans.com/api/search-index';
         const LOCAL_INDEX = 'search-index.json';
         
-        // Try remote, fallback to local on network error
         let res;
-        try {
-          res = await fetch(REMOTE_INDEX);
-        } catch (err) {
-          console.warn('Remote index fetch failed, falling back to local.', err);
-          res = await fetch(LOCAL_INDEX);
-        }
+        try { res = await fetch(REMOTE_INDEX); } 
+        catch (err) { res = await fetch(LOCAL_INDEX); }
 
-        // If remote returns error code, try local
         if (!res.ok) res = await fetch(LOCAL_INDEX);
-        
         beanIndex = await res.json();
         
-        // Ensure searchableText exists (API usually has it, local might not)
+        // Ensure searchableText exists
         beanIndex.forEach(b => {
           if (!b.searchableText) {
             b.searchableText = [b.title, b.metadata?.coffee?.roasterName, b.metadata?.coffee?.process].filter(Boolean).join(' ');
@@ -2531,8 +2529,6 @@
       } catch (e) {
         console.error('Bean Index fetch error:', e);
       }
-
-      renderAll();
     }
 
     function renderAll() {
