@@ -13,21 +13,18 @@ DROP TABLE IF EXISTS orders;
 -- ── ORDERS ──────────────────────────────────────────────
 CREATE TABLE orders (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id     TEXT    NOT NULL,
-  order_id    TEXT    NOT NULL,
+  order_id    TEXT    NOT NULL UNIQUE,
   date        TEXT    NOT NULL,
   vendor      TEXT    NOT NULL,
   is_combo    INTEGER DEFAULT 0,
   combo_price REAL    DEFAULT 0,
   notes       TEXT,
-  created_at  TEXT    DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(user_id, order_id)
+  created_at  TEXT    DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ── PURCHASE LOGS ───────────────────────────────────────
 CREATE TABLE logs (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id     TEXT    NOT NULL,
   order_id    TEXT    NOT NULL,
   date        TEXT    NOT NULL,
   category    TEXT    NOT NULL,
@@ -48,8 +45,7 @@ CREATE TABLE logs (
 
 -- ── BREW JOURNAL ─────────────────────────────────────────
 CREATE TABLE journal (
-  id         TEXT    NOT NULL,
-  user_id    TEXT    NOT NULL,
+  id         TEXT    PRIMARY KEY,
   date       TEXT    NOT NULL,
   brewer     TEXT,
   bean_id    TEXT,
@@ -64,20 +60,17 @@ CREATE TABLE journal (
   rating     INTEGER DEFAULT 0,
   tastes     TEXT,
   created_at TEXT    DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT    DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (id, user_id)
+  updated_at TEXT    DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ── SHELF / BAG META ─────────────────────────────────────
 CREATE TABLE shelf_meta (
-  log_id         TEXT    NOT NULL,
-  user_id        TEXT    NOT NULL,
+  log_id         TEXT    PRIMARY KEY,
   roast_date     TEXT,
   delivered_date TEXT,
   opened_date    TEXT,
   finished_date  TEXT,
   is_finished    INTEGER DEFAULT 0,
   gram_entries   TEXT,
-  updated_at     TEXT    DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (log_id, user_id)
+  updated_at     TEXT    DEFAULT CURRENT_TIMESTAMP
 );
